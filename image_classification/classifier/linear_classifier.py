@@ -4,18 +4,17 @@
 Created on 2019/02/14
 author: lujie
 """
-
-from linear_svm import *
-from softmax import *
+import numpy as np
+from classifier.svm_loss import svm_loss_naive, svm_loss_vectorized
+from classifier.softmax_loss import softmax_loss_naive, softmax_loss_vectorized
 
 class LinearClassifier(object):
 
     def __init__(self):
         self.W = None
 
-    def train(self, X, y, learning_rate=1e-3, reg=1e-5, num_iters=100,
-                          batch_size=200, verbose=True):  #注意这里传递的参数设置
-        """
+    def train(self, X, y, learning_rate = 1e-3, reg = 1e-5, num_iters = 100, batch_size = 200, verbose = True):
+        '''
         Train this linear classifier using stochastic gradient descent.
 
         Inputs:
@@ -31,21 +30,20 @@ class LinearClassifier(object):
 
         Outputs:
         A list containing the value of the loss function at each training iteration.
-        """
-        num_train, dim = X.shape
+        '''
+        num_train, dim = X.shape[0], X.shape[1]
         # assume y takes values 0...K-1 where K is number of classes
         num_classes = np.max(y) + 1
         if self.W is None:
             # lazily initialize W
-            self.W = 0.001 * np.random.randn(dim, num_classes)   # 初始化W
+            self.W = 0.001 * np.random.randn(dim, num_classes)
 
         # Run stochastic gradient descent(Mini-Batch) to optimize W
         loss_history = []
-        for it in xrange(num_iters):  #每次随机取batch的数据来进行梯度下降
-            X_batch = None
-            y_batch = None
+        for it in range(num_iters):  #每次随机取batch的数据来进行梯度下降
+            X_batch, y_batch = None, None
             # Sampling with replacement is faster than sampling without replacement.
-            sample_index = np.random.choice(num_train, batch_size, replace=False)
+            sample_index = np.random.choice(num_train, batch_size, replace = False)
             X_batch = X[sample_index, :]   # batch_size by D
             y_batch = y[sample_index]      # 1 by batch_size
             # evaluate loss and gradient
@@ -55,12 +53,12 @@ class LinearClassifier(object):
             # perform parameter update
             self.W += -learning_rate * grad
             if verbose and it % 100 == 0:
-                print 'Iteration %d / %d: loss %f' % (it, num_iters, loss)
+                print('Iteration %d / %d: loss %f' % (it, num_iters, loss))
 
         return loss_history
 
     def predict(self, X):
-        """
+        '''
         Use the trained weights of this linear classifier to predict labels for
         data points.
 
@@ -71,10 +69,10 @@ class LinearClassifier(object):
         - y_pred: Predicted labels for the data in X. y_pred is a 1-dimensional
                   array of length N, and each element is an integer giving the
                   predicted class.
-        """
+        '''
         y_pred = np.zeros(X.shape[1])    # 1 by N
-        X=X.T
-        y_pred = np.argmax(X.dot(self.W), axis=0) #预测直接找到最后y最大的那个值
+        X = X.T
+        y_pred = np.argmax(X.dot(self.W), axis = 0) #预测直接找到最后y最大的那个值
 
         return y_pred
 
@@ -96,15 +94,15 @@ class LinearClassifier(object):
         pass
 
 class LinearSVM(LinearClassifier):
-    """
+    '''
     A subclass that uses the Multiclass SVM loss function
-    """
+    '''
     def loss(self, X_batch, y_batch, reg):
         return svm_loss_vectorized(self.W, X_batch, y_batch, reg)
 
 class Softmax(LinearClassifier):
-    """
+    '''
     A subclass that uses the Softmax + Cross-entropy loss function
-    """
+    '''
     def loss(self, X_batch, y_batch, reg):
         return softmax_loss_vectorized(self.W, X_batch, y_batch, reg)
