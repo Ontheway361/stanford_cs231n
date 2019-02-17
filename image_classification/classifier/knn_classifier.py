@@ -128,7 +128,7 @@ class KNearestNeighbor(object):
     """
     num_test = dists.shape[0]
     y_pred = np.zeros(num_test)
-    for i in xrange(num_test):
+    for i in range(num_test):
       # A list of length k storing the labels of the k nearest neighbors to
       # the ith test point.
       closest_y = []
@@ -149,6 +149,7 @@ class KNearestNeighbor(object):
       # label.                                                                #
       #########################################################################
       y_pred[i] = np.argmax(np.bincount(closest_y))
+    return y_pred
 
   def predict(self, X, k = 1, num_loops = 0):
     """

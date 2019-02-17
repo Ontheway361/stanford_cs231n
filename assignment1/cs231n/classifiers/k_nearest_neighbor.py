@@ -8,7 +8,7 @@ class KNearestNeighbor(object):
 
   def train(self, X, y):
     """
-    Train the classifier. For k-nearest neighbors this is just 
+    Train the classifier. For k-nearest neighbors this is just
     memorizing the training data.
 
     Inputs:
@@ -19,37 +19,65 @@ class KNearestNeighbor(object):
     """
     self.X_train = X
     self.y_train = y
-    
-  def predict(self, X, k=1, num_loops=0):
+
+  def compute_distances_no_loops(self, X):
     """
-    Predict labels for test data using this classifier.
+    Compute the distance between each test point in X and each training point
+    in self.X_train using no explicit loops.
 
-    Inputs:
-    - X: A numpy array of shape (num_test, D) containing test data consisting
-         of num_test samples each of dimension D.
-    - k: The number of nearest neighbors that vote for the predicted labels.
-    - num_loops: Determines which implementation to use to compute distances
-      between training points and testing points.
-
-    Returns:
-    - y: A numpy array of shape (num_test,) containing predicted labels for the
-      test data, where y[i] is the predicted label for the test point X[i].  
+    Input / Output: Same as compute_distances_two_loops
     """
-    if num_loops == 0:
-      dists = self.compute_distances_no_loops(X)
-    elif num_loops == 1:
-      dists = self.compute_distances_one_loop(X)
-    elif num_loops == 2:
-      dists = self.compute_distances_two_loops(X)
-    else:
-      raise ValueError('Invalid value %d for num_loops' % num_loops)
+    num_test = X.shape[0]
+    num_train = self.X_train.shape[0]
+    dists = np.zeros((num_test, num_train))
+    #########################################################################
+    # TODO:                                                                 #
+    # Compute the l2 distance between all test points and all training      #
+    # points without using any explicit loops, and store the result in      #
+    # dists.                                                                #
+    #                                                                       #
+    # You should implement this function using only basic array operations; #
+    # in particular you should not use functions from scipy.                #
+    #                                                                       #
+    # HINT: Try to formulate the l2 distance using matrix multiplication    #
+    #       and two broadcast sums.                                         #
+    #########################################################################
+    X_X_train = np.dot(X, self.X_train.T)
+    X_squresum = np.sum(X ** 2, axis=1)
+    X_train_squresum = np.sum(self.X_train.T **2, axis=0)
+    dists = np.matrix(X_squresum).T + np.matrix(X_train_squresum) - 2*np.matrix(X_X_train)
+    dists = np.array(dists)
+    #########################################################################
+    #                         END OF YOUR CODE                              #
+    #########################################################################
+    return dists
 
-    return self.predict_labels(dists, k=k)
+  def compute_distances_one_loop(self, X):
+    """
+    Compute the distance between each test point in X and each training point
+    in self.X_train using a single loop over the test data.
+
+    Input / Output: Same as compute_distances_two_loops
+    """
+    num_test = X.shape[0]
+    num_train = self.X_train.shape[0]
+    dists = np.zeros((num_test, num_train))
+    for i in xrange(num_test):
+      #######################################################################
+      # TODO:                                                               #
+      # Compute the l2 distance between the ith test point and all training #
+      # points, and store the result in dists[i, :].                        #
+      #######################################################################
+      dists[i, :] = np.sum((X[i] - self.X_train)**2, axis=1)
+      #######################################################################
+      #                         END OF YOUR CODE                            #
+      #######################################################################
+    return dists
 
   def compute_distances_two_loops(self, X):
     """
     Compute the distance between each test point in X and each training point
-    in self.X_train using a nested loop over both the training data and the 
+    in self.X_train using a nested loop over both the training data and the
     test data.
 
     Inputs:
@@ -77,60 +105,6 @@ class KNearestNeighbor(object):
         #####################################################################
     return dists
 
-  def compute_distances_one_loop(self, X):
-    """
-    Compute the distance between each test point in X and each training point
-    in self.X_train using a single loop over the test data.
-
-    Input / Output: Same as compute_distances_two_loops
-    """
-    num_test = X.shape[0]
-    num_train = self.X_train.shape[0]
-    dists = np.zeros((num_test, num_train))
-    for i in xrange(num_test):
-      #######################################################################
-      # TODO:                                                               #
-      # Compute the l2 distance between the ith test point and all training #
-      # points, and store the result in dists[i, :].                        #
-      #######################################################################
-      dists[i, :] = np.sum((X[i] - self.X_train)**2, axis=1)
-      #######################################################################
-      #                         END OF YOUR CODE                            #
-      #######################################################################
-    return dists
-
-  def compute_distances_no_loops(self, X):
-    """
-    Compute the distance between each test point in X and each training point
-    in self.X_train using no explicit loops.
-
-    Input / Output: Same as compute_distances_two_loops
-    """
-    num_test = X.shape[0]
-    num_train = self.X_train.shape[0]
-    dists = np.zeros((num_test, num_train)) 
-    #########################################################################
-    # TODO:                                                                 #
-    # Compute the l2 distance between all test points and all training      #
-    # points without using any explicit loops, and store the result in      #
-    # dists.                                                                #
-    #                                                                       #
-    # You should implement this function using only basic array operations; #
-    # in particular you should not use functions from scipy.                #
-    #                                                                       #
-    # HINT: Try to formulate the l2 distance using matrix multiplication    #
-    #       and two broadcast sums.                                         #
-    #########################################################################
-    X_X_train = np.dot(X, self.X_train.T)
-    X_squresum = np.sum(X ** 2, axis=1)
-    X_train_squresum = np.sum(self.X_train.T **2, axis=0)
-    dists = np.matrix(X_squresum).T + np.matrix(X_train_squresum) - 2*np.matrix(X_X_train) 
-    dists = np.array(dists)
-    #########################################################################
-    #                         END OF YOUR CODE                              #
-    #########################################################################
-    return dists
-
   def predict_labels(self, dists, k=1):
     """
     Given a matrix of distances between test points and training points,
@@ -142,7 +116,7 @@ class KNearestNeighbor(object):
 
     Returns:
     - y: A numpy array of shape (num_test,) containing predicted labels for the
-      test data, where y[i] is the predicted label for the test point X[i].  
+      test data, where y[i] is the predicted label for the test point X[i].
     """
     num_test = dists.shape[0]
     y_pred = np.zeros(num_test)
@@ -157,7 +131,8 @@ class KNearestNeighbor(object):
       # neighbors. Store these labels in closest_y.                           #
       # Hint: Look up the function numpy.argsort.                             #
       #########################################################################
-      closest_y = np.argsort(dists[i]).tolist()
+      # closest_y = np.argsort(dists[i]).tolist()
+      closest_y = self.y_train[np.argsort(dists[i,:])[:k]]
       #########################################################################
       # TODO:                                                                 #
       # Now that you have found the labels of the k nearest neighbors, you    #
@@ -165,17 +140,43 @@ class KNearestNeighbor(object):
       # Store this label in y_pred[i]. Break ties by choosing the smaller     #
       # label.                                                                #
       #########################################################################
-      labels = self.y_train[closest_y[:k]].tolist()
-      label_count = {}
-      for label in labels:
-        label_count[label] = label_count.get(0, label) + 1
-      y_pred[i] = labels[0]
-      for label in labels:
-        if label_count[label] > label_count[y_pred[i]]:
-          y_pred[i] = label
+      # labels = self.y_train[closest_y[:k]].tolist()
+      # label_count = {}
+      # for label in labels:
+      #   label_count[label] = label_count.get(0, label) + 1
+      # y_pred[i] = labels[0]
+      # for label in labels:
+      #   if label_count[label] > label_count[y_pred[i]]:
+      #     y_pred[i] = label
+      y_pred[i] = np.argmax(np.bincount(closest_y))
       #########################################################################
-      #                           END OF YOUR CODE                            # 
+      #                           END OF YOUR CODE                            #
       #########################################################################
 
     return y_pred
 
+  def predict(self, X, k = 1, num_loops = 0):
+    """
+    Predict labels for test data using this classifier.
+
+    Inputs:
+    - X: A numpy array of shape (num_test, D) containing test data consisting
+         of num_test samples each of dimension D.
+    - k: The number of nearest neighbors that vote for the predicted labels.
+    - num_loops: Determines which implementation to use to compute distances
+      between training points and testing points.
+
+    Returns:
+    - y: A numpy array of shape (num_test,) containing predicted labels for the
+      test data, where y[i] is the predicted label for the test point X[i].
+    """
+    if num_loops == 0:
+      dists = self.compute_distances_no_loops(X)
+    elif num_loops == 1:
+      dists = self.compute_distances_one_loop(X)
+    elif num_loops == 2:
+      dists = self.compute_distances_two_loops(X)
+    else:
+      raise ValueError('Invalid value %d for num_loops' % num_loops)
+
+    return self.predict_labels(dists, k = k)
