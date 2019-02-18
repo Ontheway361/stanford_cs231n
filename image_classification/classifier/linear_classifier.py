@@ -5,6 +5,7 @@ Created on 2019/02/14
 author: lujie
 """
 import numpy as np
+from IPython import embed
 from classifier.svm_loss import svm_loss_naive, svm_loss_vectorized
 from classifier.softmax_loss import softmax_loss_naive, softmax_loss_vectorized
 
@@ -71,8 +72,8 @@ class LinearClassifier(object):
                   predicted class.
         '''
         y_pred = np.zeros(X.shape[1])    # 1 by N
-        X = X.T
-        y_pred = np.argmax(X.dot(self.W), axis = 0) #预测直接找到最后y最大的那个值
+        # X = X.T
+        y_pred = np.argmax(X.dot(self.W), axis = 1) #预测直接找到最后y最大的那个值
 
         return y_pred
 

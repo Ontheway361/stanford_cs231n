@@ -33,14 +33,14 @@ if __name__ == '__main__':
 
     # step - 3. call the linear_svm
     linear_svm = LinearSVM()
-    linear_svm.train(Xtr, Ytr, learning_rate = 1e-3, reg = 1e-5, num_iters = 100, batch_size = 200)
-    svm_pred = linear_svm.predict(Xte, Yte)
+    linear_svm.train(Xtr.reshape(num_train, -1), Ytr, learning_rate = 1e-3, reg = 2e-5, num_iters = 1000, batch_size = 2000)
+    svm_pred = linear_svm.predict(Xte.reshape(num_test, -1))
     svm_acc  = cal_accuracy(Yte, svm_pred)
-
+    print('svm_acc : %6.4f' % svm_acc)
     # step - 4. call the softmax
-    softmax_classifier = LinearSVM()
-    softmax_classifier.train(Xtr, Ytr, learning_rate = 1e-3, reg = 1e-5, num_iters = 100, batch_size = 200)
-    softmax_pred = softmax_classifier.predict(Xte, Yte)
-    softmax_acc  = cal_accuracy(Yte, softmax_pred)
-
-    print('knn_acc %6.4f;\tsvm_acc %6.4f;\tsoftmax_acc %6.4f' % (knn_acc, svm_acc, softmax_acc))
+    # softmax_classifier = LinearSVM()
+    # softmax_classifier.train(Xtr, Ytr, learning_rate = 1e-3, reg = 1e-5, num_iters = 100, batch_size = 200)
+    # softmax_pred = softmax_classifier.predict(Xte, Yte)
+    # softmax_acc  = cal_accuracy(Yte, softmax_pred)
+    #
+    # print('knn_acc %6.4f;\tsvm_acc %6.4f;\tsoftmax_acc %6.4f' % (knn_acc, svm_acc, softmax_acc))

@@ -15,8 +15,6 @@ from IPython import embed
 # reload(sys)
 # sys.setdefaultencoding('utf8')
 
-
-
 def load_CIFAR_batch(filename):
   """ load single batch of cifar """
   with open(filename, 'rb') as f:
@@ -39,7 +37,7 @@ def load_CIFAR10(ROOT, memory_fit = False, num_base = 500):
   Ytr = np.concatenate(ys)
   del X, Y
   Xte, Yte = load_CIFAR_batch(os.path.join(ROOT, 'test_batch'))
-
+  
   Xtr_clip = []; Ytr_clip = []
   if memory_fit:
       sample_index = np.random.permutation(Xte.shape[0])[:num_base]
