@@ -77,9 +77,9 @@ class ClassifierEngine(object):
     def neural_networks(self, lr = 1e-3, lr_decay = 0.95, reg_lambda = 1e-5, niter = 10000, nbatch = 200):
         ''' two-layer neural neural networks '''
 
-        classifier = TwoLayerNet(input_size = num_dim, hidden_size = 200, output_size = num_class)
+        classifier = TwoLayerNet(input_size = self.num_dim, hidden_size = 200, output_size = self.num_class)
         classifier.train(self.dataset['train_X'].reshape(self.num_train, -1), self.dataset['train_Y'], \
-                             self.dataset['valid_X'].reshape(self.num_valid, -1), self.dataset['vaild_Y'], \
+                             self.dataset['valid_X'].reshape(self.num_valid, -1), self.dataset['valid_Y'], \
                              learning_rate = lr, learning_rate_decay = lr_decay, reg = reg_lambda, num_iters = niter, batch_size = nbatch)
         pred_Y = classifier.predict(self.dataset['test_X'].reshape(self.num_test, -1))
         acc = np.mean(self.dataset['test_Y'] == pred_Y)    # 48%
@@ -93,9 +93,9 @@ class ClassifierEngine(object):
             raise TypeError(error_info)
         else:
             for classifier in classifier_list:
-                if 'knn' in classifer:
+                if 'knn' in classifier:
                     acc_result['knn_classifier'] = self.knn_classifier(K = 10)
-                elif 'svm' in classifer:
+                elif 'svm' in classifier:
                     acc_result['svm_classifier'] = self.svm_classifier(lr = 1e-3, reg_lambda = 2e-5, niters = 1000)
                 elif 'softmax' in classifier:
                     acc_result['softmax_classifier'] = self.softmax_classifier(lr = 1e-3, reg_lambda = 2e-5, niters = 1000)
