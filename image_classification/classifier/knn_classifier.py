@@ -113,7 +113,7 @@ class KNearestNeighbor(object):
         #####################################################################
     return dists
 
-  def predict_labels(self, dists, k=1):
+  def predict_labels(self, dists, k = 10):
     """
     Given a matrix of distances between test points and training points,
     predict a label for each test point.
@@ -151,7 +151,7 @@ class KNearestNeighbor(object):
       y_pred[i] = np.argmax(np.bincount(closest_y))
     return y_pred
 
-  def predict(self, X, k = 1, num_loops = 0):
+  def predict(self, X, k = 10, num_loops = 0):
     """
     Predict labels for test data using this classifier.
 
@@ -174,5 +174,4 @@ class KNearestNeighbor(object):
       dists = self.compute_distances_two_loops(X)
     else:
       raise ValueError('Invalid value %d for num_loops' % num_loops)
-
     return self.predict_labels(dists, k = k)

@@ -14,7 +14,7 @@ class LinearClassifier(object):
     def __init__(self):
         self.W = None
 
-    def train(self, X, y, learning_rate = 1e-3, reg = 1e-5, num_iters = 100, batch_size = 200, verbose = True):
+    def train(self, X, y, learning_rate = 1e-3, reg = 1e-5, num_iters = 5000, batch_size = 200, quite_mode = False):
         '''
         Train this linear classifier using stochastic gradient descent.
 
@@ -27,7 +27,7 @@ class LinearClassifier(object):
         - reg: (float) regularization strength.
         - num_iters: (integer) number of steps to take when optimizing
         - batch_size: (integer) number of training examples to use at each step.
-        - verbose: (boolean) If true, print progress during optimization.
+        - quite_mode: (boolean) If False, print progress during optimization.
 
         Outputs:
         A list containing the value of the loss function at each training iteration.
@@ -41,7 +41,7 @@ class LinearClassifier(object):
 
         # Run stochastic gradient descent(Mini-Batch) to optimize W
         loss_history = []
-        for it in range(num_iters):  #每次随机取batch的数据来进行梯度下降
+        for it in range(num_iters):
             X_batch, y_batch = None, None
             # Sampling with replacement is faster than sampling without replacement.
             sample_index = np.random.choice(num_train, batch_size, replace = False)
@@ -53,7 +53,7 @@ class LinearClassifier(object):
 
             # perform parameter update
             self.W += -learning_rate * grad
-            if verbose and it % 100 == 0:
+            if (not quite_mode) and (it % 100) == 0:
                 print('Iteration %d / %d: loss %f' % (it, num_iters, loss))
 
         return loss_history
@@ -72,8 +72,7 @@ class LinearClassifier(object):
                   predicted class.
         '''
         y_pred = np.zeros(X.shape[1])    # 1 by N
-        # X = X.T
-        y_pred = np.argmax(X.dot(self.W), axis = 1) #预测直接找到最后y最大的那个值
+        y_pred = np.argmax(X.dot(self.W), axis = 1)
 
         return y_pred
 

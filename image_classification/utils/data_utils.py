@@ -6,12 +6,13 @@ author: lujie
 """
 
 # import cPickle as pickle
+import os
 import sys
 import pickle
 import numpy as np
-import os
 from scipy.misc import imread
 from IPython import embed
+
 # reload(sys)
 # sys.setdefaultencoding('utf8')
 
@@ -25,32 +26,25 @@ def load_CIFAR_batch(filename):
     Y = np.array(Y)
     return X, Y
 
-def load_CIFAR10(ROOT, memory_fit = False, num_base = 500):
+def load_CIFAR10(file_path):
   """ load all of cifar """
   xs = []; ys = []
   for b in range(1,6):
-    f = os.path.join(ROOT, 'data_batch_%d' % (b, ))
-    X, Y = load_CIFAR_batch(f)
-    xs.append(X)
-    ys.append(Y)
-  Xtr = np.concatenate(xs)
-  Ytr = np.concatenate(ys)
-  del X, Y
-  Xte, Yte = load_CIFAR_batch(os.path.join(ROOT, 'test_batch'))
-  
-  Xtr_clip = []; Ytr_clip = []
-  if memory_fit:
-      sample_index = np.random.permutation(Xte.shape[0])[:num_base]
-      Xte, Yte = Xte[sample_index,:, :, :], Yte[sample_index]
-      for label in set(Yte):
-          choose_index = Ytr == label
-          # choose_index = [1 if ele is True else 0 for ele in choose_index]
-          choose_X, choose_y = Xtr[choose_index, :, :, :][:100], Ytr[choose_index][:100]
-          Xtr_clip.append(choose_X); Ytr_clip.append(choose_y)
-      Xtr, Ytr = np.concatenate(Xtr_clip), np.concatenate(Ytr_clip)
-  return Xtr, Ytr, Xte, Yte
+    f = os.path.join(file_path, 'data_batch_%d' % (b, ))
+    X_batch, Y_batch = load_CIFAR_batch(f)
+    xs.append(X_batch); ys.append(Y_batch)
+  del X_batch, Y_batch
+  X, Y = np.concatenate(xs), np.concatenate(ys)
+  order_list = np.arange(X.shape[0]); np.random.shuffle(order_list)
 
-def load_tiny_imagenet(path, dtype=np.float32):
+  dataset = {}
+  dataset['train_X'], dataset['train_Y'] = X[order_list[:40000], :], Y[order_list[:40000]]
+  dataset['valid_X'], dataset['valid_Y'] = X[order_list[40000:], :], Y[order_list[40000:]]
+  dataset['test_X'], dataset['test_Y']   = load_CIFAR_batch(os.path.join(file_path, 'test_batch'))
+
+  return dataset
+
+def load_tiny_imagenet(path, dtype = np.float32):
   """
   Load TinyImageNet. Each of TinyImageNet-100-A, TinyImageNet-100-B, and
   TinyImageNet-200 have the same directory structure, so this can be used
@@ -155,7 +149,6 @@ def load_tiny_imagenet(path, dtype=np.float32):
     y_test = np.array(y_test)
 
   return class_names, X_train, y_train, X_val, y_val, X_test, y_test
-
 
 def load_models(models_dir):
   """
