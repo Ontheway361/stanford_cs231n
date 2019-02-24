@@ -7,6 +7,7 @@ author: lujie
 
 import matplotlib
 import numpy as np
+from IPython import embed
 from scipy.ndimage import uniform_filter
 
 def extract_features(imgs, feature_fns, verbose = False):
@@ -43,7 +44,7 @@ def extract_features(imgs, feature_fns, verbose = False):
     # big array to store all features as columns.
     total_feature_dim = sum(feature_dims)
     imgs_features = np.zeros((num_img, total_feature_dim))
-    imgs_features[0] = np.hstack(first_image_features).T
+    imgs_features[0] = np.hstack(first_image_features).T    # concat on row
 
     # Extract features for the rest of the images.
     for i in range(1, num_img):
@@ -60,7 +61,7 @@ def rgb2gray(rgb):
     ''' convert RGB image to grayscale '''
     return np.dot(rgb[...,:3], [0.299, 0.587, 0.144])
 
-def hog_feature(im):
+def hog_feature(img):
     '''
     Compute Histogram of Gradient (HOG) feature for an image
     Parameters: an input grayscale or rgb image
@@ -69,38 +70,33 @@ def hog_feature(im):
     Reference : Histograms of Oriented Gradients for Human Detection Navneet Dalal and Bill Triggs, CVPR 2005
     '''
     # convert rgb to grayscale if needed
-    img = rgb2gray(im) if im.ndim == 3 else np.at_least_2d(im)
+    img = rgb2gray(img) if img.ndim == 3 else np.at_least_2d(img)
 
-    img_h, img_w = img.shape[0],  img.shape[1]
+    img_y, img_x = img.shape[0],  img.shape[1]
     orientations = 9 # number of gradient bins
     cx, cy = (8, 8) # pixels per cell
 
-    gx = np.zeros(image.shape)
-    gy = np.zeros(image.shape)
-    gx[:, :-1] = np.diff(image, n=1, axis=1) # compute gradient on x-direction
-    gy[:-1, :] = np.diff(image, n=1, axis=0) # compute gradient on y-direction
+    gx, gy = np.zeros(img.shape), np.zeros(img.shape)
+    gx[:, :-1] = np.diff(img, n = 1, axis = 1) # compute gradient on x-direction
+    gy[:-1, :] = np.diff(img, n = 1, axis = 0) # compute gradient on y-direction
     grad_mag = np.sqrt(gx ** 2 + gy ** 2) # gradient magnitude
     grad_ori = np.arctan2(gy, (gx + 1e-15)) * (180 / np.pi) + 90 # gradient orientation
 
-    n_cellsx = int(np.floor(img_h / cx))  # number of cells in x
-    n_cellsy = int(np.floor(img_w / cy))  # number of cells in y
+    n_cellsx, n_cellsy = int(np.floor(img_x / cx)), int(np.floor(img_y / cy))
     # compute orientations integral images
     orientation_histogram = np.zeros((n_cellsx, n_cellsy, orientations))
+
     for i in range(orientations):
-      # create new integral image for this orientation
-      # isolate orientations in this range
-      temp_ori = np.where(grad_ori < 180 / orientations * (i + 1),
-                          grad_ori, 0)
-      temp_ori = np.where(grad_ori >= 180 / orientations * i,
-                          temp_ori, 0)
-      # select magnitudes for those orientations
-      cond2 = temp_ori > 0
-      temp_mag = np.where(cond2, grad_mag, 0)
-      orientation_histogram[:,:,i] = uniform_filter(temp_mag, size=(cx, cy))[cx/2::cx, cy/2::cy].T
+        # create new integral image for this orientation
+        # isolate orientations in this range
+        temp_ori = np.where(grad_ori < 180 / orientations * (i + 1), grad_ori, 0)
+        temp_ori = np.where(grad_ori >= 180 / orientations * i, temp_ori, 0)
+        # select magnitudes for those orientations
+        temp_mag = np.where( temp_ori > 0, grad_mag, 0)
+        orientation_histogram[:,:,i] = uniform_filter(temp_mag, size=(cx, cy))[cx//2::cx, cy//2::cy].T  # [4, 12, 20, 28] * [4, 12, 20, 28]
+    return orientation_histogram.ravel()
 
-  return orientation_histogram.ravel()
-
-def color_histogram_hsv(im, nbin=10, xmin=0, xmax=255, normalized=True):
+def color_histogram_hsv(im, nbin = 10, xmin = 0, xmax = 255, normalized = True):
     '''
       Compute color histogram for an image using hue.
 
@@ -112,14 +108,10 @@ def color_histogram_hsv(im, nbin=10, xmin=0, xmax=255, normalized=True):
       - normalized: Whether to normalize the histogram (default: True)
 
       Returns:
-        1D vector of length nbin giving the color histogram over the hue of the
-        input image.
+        1D vector of length nbin giving the color histogram over the hue of the input image.
     '''
-    ndim = im.ndim
-    bins = np.linspace(xmin, xmax, nbin+1)
-    hsv = matplotlib.colors.rgb_to_hsv(im/xmax) * xmax
-    imhist, bin_edges = np.histogram(hsv[:,:,0], bins=bins, density=normalized)
+    bins = np.linspace(xmin, xmax, nbin + 1)
+    hsv = matplotlib.colors.rgb_to_hsv(im / xmax) * xmax
+    imhist, bin_edges = np.histogram(hsv[:,:,0], bins = bins, density = normalized)
     imhist = imhist * np.diff(bin_edges)
-
-    # return histogram
     return imhist

@@ -5,9 +5,12 @@ Created on 2019/02/17
 author: lujie
 """
 import numpy as np
+import matplotlib.pyplot as plt
+
 from IPython import embed
 from utils.path_util import DATA_PATH
 from utils.data_utils import load_CIFAR10
+from utils.features import extract_features, hog_feature, color_histogram_hsv
 from classifier.knn_classifier import KNearestNeighbor
 from classifier.linear_classifier import LinearSVM, Softmax
 from classifier.nn_classifier import TwoLayerNet
@@ -44,6 +47,19 @@ class ClassifierEngine(object):
         else:
             raise TypeError('Unknown dataset, please check...')
         return dataset
+
+    def gen_features(self, nbins = 10):
+        ''' gen mid-level features for image '''
+
+        feature_fns = [hog_feature, lambda img: color_histogram_hsv(img, nbin = nbins)]
+        self.dataset['train_X'] = extract_features(self.dataset['train_X'], feature_fns, verbose = True)
+        self.dataset['valid_X'] = extract_features(self.dataset['valid_X'], feature_fns, verbose = True)
+        self.dataset['test_X']  = extract_features(self.dataset['test_X'], feature_fns, verbose = True)
+        self.num_dim = np.prod(self.dataset['train_X'].shape[1:])
+
+    def visual_dataset(self):
+        ''' visual the dataset '''
+        pass
 
     def knn_classifier(self, K = 10):
         ''' KNearestNeighbor classifier '''
@@ -105,8 +121,13 @@ class ClassifierEngine(object):
                     print('there is no %s' % classifier)
         return acc_result
 
+
+
 if __name__ == '__main__':
     classifier_engine = ClassifierEngine('CIFAR10')
     classifier_engine.dataloader()
-    classifier_list = ['svm_classifier', 'softmax_classifier', 'neural_networks']
+    classifier_engine.gen_features()
+
+    # classifier_list = ['svm_classifier', 'softmax_classifier', 'neural_networks']
+    classifier_list = ['neural_networks']
     result = classifier_engine.classifier_runner(classifier_list)
