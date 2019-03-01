@@ -115,3 +115,55 @@ def color_histogram_hsv(im, nbin = 10, xmin = 0, xmax = 255, normalized = True):
     imhist, bin_edges = np.histogram(hsv[:,:,0], bins = bins, density = normalized)
     imhist = imhist * np.diff(bin_edges)
     return imhist
+
+
+def eigValPct(eigVals, percentage = 0.9):
+    sortArray = np.sort(eigVals)[-1::-1]
+    arraySum = sum(sortArray)
+    tempSum, num  = 0, 0
+    for i in sortArray:
+        tempSum += i
+        num += 1
+        if tempSum >= arraySum * percentage:
+            return num
+
+def pca_feature(imgs, energy_percentage = 0.9, pmin = 0.0, pmax = 255.0):
+    '''
+    motivation : use the pca to extract the intrinsic info,
+                 eliminate the noise that contained in image.
+
+    Input  :
+    - imgs : N * H * W * C , tensor data
+    - energy_percentage : extract the top-K eig-vector to keep the ratio of energy
+
+    Returns :
+    - feats : pca_feas
+    '''
+    # step - 1. reshape
+    nimgs, ndims = imgs.shape[0], np.prod(imgs.shape[1:])
+    imgs = imgs.reshape(nimgs, -1)
+
+    # step - 2. normalize and centralization
+    imgs = (imgs - pmin) / (pmax - pmin)
+    imgs_mean = np.mean(imgs, axis = 0)
+    imgs -= imgs_mean
+
+    # step - 3. cal cov, eig-vector
+    covMat = np.cov(imgs, rowvar = False) # each row is an instance
+    eigVals, eigVects = np.linalg.eig(np.mat(covMat))
+    # top_K = eigValPct(eigVals, energy_percentage)
+    top_K = 99
+    intrinsic_idx = np.argsort(eigVals)[:-(top_K + 1):-1]
+    # temp_sort = np.argsort(eigVals)
+    # intrinsic_idx = temp_sort[:-(top_K + 1):-1]
+    # residual_idx  = np.array(list(set(temp_sort) ^ set(intrinsic_idx)))
+
+    pca_fea = imgs * eigVects[:, intrinsic_idx]
+    # res_fea = imgs_mean * eigVects[:, residual_idx]
+
+    # step - 4. optional
+    # intrinsic_info = pca_fea * eigVects[:, val_idx].T
+    # residual_info  = res_fea * eigVects[:, residual_idx].T
+    # reconstruct_imgs = intrinsic_info + residual_info    # PRML (p565-12.10)
+
+    return np.array(pca_fea)

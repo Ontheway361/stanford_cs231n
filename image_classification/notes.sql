@@ -30,3 +30,7 @@ challenges of recognition
 3. occlusion              | 遮挡
 4. clutter                | 前后景交融
 5. intraclass variation   | 类内变化
+
+
+
+# Bag of Words

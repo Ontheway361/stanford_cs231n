@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 from IPython import embed
 from utils.path_util import DATA_PATH
 from utils.data_utils import load_CIFAR10
-from utils.gradient_check improt eval_numerical_gradient
-from utils.features import extract_features, hog_feature, color_histogram_hsv
+from utils.gradient_check import eval_numerical_gradient
+from utils.features import extract_features, hog_feature, color_histogram_hsv, pca_feature
 from classifier.knn_classifier import KNearestNeighbor
 from classifier.linear_classifier import LinearSVM, Softmax
 from classifier.nn_classifier import TwoLayerNet
@@ -35,7 +35,11 @@ class ClassifierEngine(object):
         self.dataset['train_X'] = extract_features(self.dataset['train_X'], feature_fns, verbose = False)
         self.dataset['valid_X'] = extract_features(self.dataset['valid_X'], feature_fns, verbose = False)
         self.dataset['test_X']  = extract_features(self.dataset['test_X'], feature_fns, verbose = False)
-        self.num_dim = np.prod(self.dataset['train_X'].shape[1:])
+
+
+        # self.dataset['train_X'] = pca_feature(self.dataset['train_X'])
+        # self.dataset['valid_X'] = pca_feature(self.dataset['valid_X'])
+        # self.dataset['test_X'] = pca_feature(self.dataset['test_X'])
 
     def dataloader(self, fea_trans = False, report_details = True):
         ''' load data, not reshape the data, shape : [N, H, W, C] '''
@@ -72,7 +76,7 @@ class ClassifierEngine(object):
             idxs = np.random.choice(idxs, examples_per_class, replace=False)
             for i, idx in enumerate(idxs):
                 plt.subplot(examples_per_class, len(classes), i * len(classes) + cls + 1)
-                plt.imshow(X_test[idx].astype('uint8'))
+                plt.imshow(self.dataset['test_X'][idx].astype('uint8'))
                 plt.axis('off')
                 if i == 0:
                     plt.title(cls_name)
@@ -90,11 +94,19 @@ class ClassifierEngine(object):
 
         # visual the acc curve
         plt.subplot(2, 1, 2)
-        plt.plot(stats['train_acc_history'], label='train')
-        plt.plot(stats['val_acc_history'], label='val')
+        plt.plot(notes['train_acc_history'], label='train')
+        plt.plot(notes['val_acc_history'], label='val')
         plt.title('Classification accuracy history')
         plt.xlabel('Epoch'); plt.ylabel('Clasification accuracy')
         plt.show()
+
+    def ckeck_gradient(self, net = None):
+        ''' '''
+        loss, grads = net.loss(self.dataset['test_X'].reshape(self.num_test, -1), self.dataset['test_Y'], reg = 1e-5)
+        for param_name in grads:
+            f = lambda W: (net.loss(self.dataset['test_X'].reshape(self.num_test, -1), self.dataset['test_Y'], reg = 1e-5))[0]
+            param_grad_num = eval_numerical_gradient(f, net.params[param_name], verbose = False)
+            print('%s max relative error: %e' % (param_name, rel_error(param_grad_num, grads[param_name])))
 
     def knn_classifier(self, K = 10):
         ''' KNearestNeighbor classifier '''
@@ -112,6 +124,7 @@ class ClassifierEngine(object):
         classifier.train(self.dataset['train_X'].reshape(self.num_train, -1), self.dataset['train_Y'], \
                              learning_rate = lr, reg = reg_lambda, num_iters = niters)
         pred_Y = classifier.predict(self.dataset['test_X'].reshape(self.num_test, -1))
+        self.visual_prederrors(pred_Y)
         acc = np.mean(self.dataset['test_Y'] == pred_Y)  # 27.35% | 0.4525
         return acc
 
@@ -125,13 +138,14 @@ class ClassifierEngine(object):
         acc = np.mean(self.dataset['test_Y'] == pred_Y)  # 28.64% | 0.4182
         return acc
 
-    def neural_networks(self, lr = 1e-3, lr_decay = 0.95, reg_lambda = 1e-5, niter = 10000, nbatch = 200):
+    def neural_networks(self, lr = 1e-3, lr_decay = 0.95, reg_lambda = 1e-5, niter = 8000, nbatch = 128):
         ''' two-layer neural neural networks '''
 
-        classifier = TwoLayerNet(input_size = self.num_dim, hidden_size = 200, output_size = self.num_class)
+        classifier = TwoLayerNet(input_size = self.num_dim, hidden_size = 100, output_size = self.num_class)
         train_notes = classifier.train(self.dataset['train_X'].reshape(self.num_train, -1), self.dataset['train_Y'], \
                                        self.dataset['valid_X'].reshape(self.num_valid, -1), self.dataset['valid_Y'], learning_rate = lr, \
                                        learning_rate_decay = lr_decay, reg = reg_lambda, num_iters = niter, batch_size = nbatch)
+        # self.ckeck_gradient(classifier)
         self.visual_train_process(train_notes)
         pred_Y = classifier.predict(self.dataset['test_X'].reshape(self.num_test, -1))
         acc = np.mean(self.dataset['test_Y'] == pred_Y)    # 48%
@@ -152,7 +166,7 @@ class ClassifierEngine(object):
                 elif 'softmax' in classifier:
                     acc_result['softmax_classifier'] = self.softmax_classifier(lr = 1e-3, reg_lambda = 2e-5, niters = 1000)
                 elif 'neural_networks' in classifier:
-                    acc_result['neural_networks'] = self.neural_networks(lr = 1e-3, lr_decay = 0.95, reg_lambda = 1e-5, niter = 10000, nbatch = 200)
+                    acc_result['neural_networks'] = self.neural_networks(lr = 1e3, lr_decay = 0.95, reg_lambda = 1e3, niter = 8000, nbatch = 200)
                 else:
                     print('there is no %s' % classifier)
         return acc_result
@@ -161,9 +175,10 @@ if __name__ == '__main__':
     classifier_engine = ClassifierEngine('CIFAR10')
     classifier_engine.dataloader(fea_trans = False)
 
+    # embed()
     # classifier_list = ['svm_classifier', 'softmax_classifier', 'neural_networks']
     classifier_list = ['neural_networks']
-    result = classifier_engine.classifier_runner(classifier_list)
+    result_dict = classifier_engine.classifier_runner(classifier_list)
 
-    for classifier, acc in zip(classifier_list, result):
+    for classifier, acc in result_dict.items():
         print('%-20s; acc: %6.4f' % (classifier, acc))
