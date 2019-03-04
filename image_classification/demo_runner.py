@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on 2019/02/17
@@ -8,7 +8,6 @@ author: lujie
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython import embed
-from utils.path_util import DATA_PATH
 from utils.data_utils import load_CIFAR10
 from utils.gradient_check import eval_numerical_gradient
 from utils.features import extract_features, hog_feature, color_histogram_hsv, pca_feature
@@ -47,8 +46,7 @@ class ClassifierEngine(object):
         print('load the dataset, please wait...')
         dataset = {}
         if self.data_name is 'CIFAR10':
-            root_path = '%s/cifar-10-batches-py/' % DATA_PATH
-            dataset = load_CIFAR10(root_path)
+            dataset = load_CIFAR10()
             if not dataset:
                 raise TypeError('load dataset error, please check root_path')
             self.dataset, self.num_class = dataset, len(set(dataset['test_Y']))
