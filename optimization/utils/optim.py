@@ -4,7 +4,7 @@
 Created on 2019/03/02
 author: lujie
 """
-
+from IPython import embed
 import numpy as np
 
 def sgd(w, dw, config = None):
@@ -16,7 +16,6 @@ def sgd(w, dw, config = None):
     """
     if config is None: config = {}
     config.setdefault('learning_rate', 1e-2)
-
     w -= config['learning_rate'] * dw
     return w, config
 

@@ -36,7 +36,9 @@ def load_CIFAR_batch(filename):
 def load_CIFAR10(num_vaild = 1000):
     ''' load all of cifar '''
 
-    file_path = '/Users/zhangyuping/Documents/stanford_cs231n/dataset/cifar-10-batches-py/'
+    # file_path = '/Users/zhangyuping/Documents/stanford_cs231n/dataset/cifar-10-batches-py/'
+    file_path = '/home/lujie/Documents/stanford_cs231n/dataset/cifar-10-batches-py/'
+    
     xs = []; ys = []
     for b in range(1,6):
         f = os.path.join(file_path, 'data_batch_%d' % (b, ))
@@ -50,10 +52,10 @@ def load_CIFAR10(num_vaild = 1000):
     mean_values = np.mean(X, axis = 0)
     X -= mean_values;
     num_train = X.shape[0]-num_vaild
-    dataset['train_X'], dataset['train_Y'] = X[order_list[:num_train], :], Y[order_list[:num_train]]
-    dataset['valid_X'], dataset['valid_Y'] = X[order_list[num_train:], :], Y[order_list[num_train:]]
-    dataset['test_X'], dataset['test_Y']   = load_CIFAR_batch(os.path.join(file_path, 'test_batch'))
-    dataset['test_X'] -= mean_values
+    dataset['X_train'], dataset['y_train'] = X[order_list[:num_train], :], Y[order_list[:num_train]]
+    dataset['X_val'], dataset['y_val'] = X[order_list[num_train:], :], Y[order_list[num_train:]]
+    dataset['X_test'], dataset['y_test']   = load_CIFAR_batch(os.path.join(file_path, 'test_batch'))
+    dataset['X_test'] -= mean_values
 
     return dataset
 

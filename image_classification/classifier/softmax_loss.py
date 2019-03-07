@@ -50,7 +50,7 @@ def softmax_loss_vectorized(W, X, y, reg):
 
     # drop the dummy value for log
     prob = np.where(prob > 1e-10, prob, 1e-10)
-    
+
     y_trueClass = np.zeros_like(prob)
     y_trueClass[range(num_train), y] = 1.0    # N by C
     loss += -np.sum(y_trueClass * np.log(prob)) / num_train + 0.5 * reg * np.sum(W * W)

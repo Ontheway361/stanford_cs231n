@@ -12,8 +12,7 @@ def eval_numerical_gradient(f, x, verbose = True, h = 0.00001):
     '''
     a naive implementation of numerical gradient of f at x
     - f should be a function that takes a single argument
-    - x is the point (numpy array) to evaluate the gradient at
-    - centered-grad [f(x+h)-f(x-h)]/(2h)
+    - x is the point (numpy array) to evaluate the gradient at centered-grad [f(x+h)-f(x-h)]/(2h)
     '''
 
     fx = f(x) # evaluate function value at original point
@@ -54,7 +53,7 @@ def eval_numerical_gradient_array(f, x, df, h = 1e-5):
         neg = f(x).copy()
         x[ix] = oldval
 
-        grad[ix] = np.sum((pos - neg) * df) / (2 * h)
+        grad[ix] = np.sum((pos - neg) * df) / (2 * h)   # 
         it.iternext()
     return grad
 

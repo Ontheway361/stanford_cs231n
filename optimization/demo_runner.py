@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on 2019/03/02
+Created on 2019/03/06
 author: lujie
 """
 
@@ -9,33 +9,75 @@ import time
 import numpy as np
 from IPython import embed
 import matplotlib.pyplot as plt
-from utils.data_utils import load_CIFAR10
 from utils.solver import Solver
-from classifiers.fc_net import TwoLayerNet, FullyConnectedNet
-from utils.gradient_check import eval_numerical_gradient, eval_numerical_gradient_array
+from classifiers.fc_net import FullyConnectedNet
 
-class ClassifierEngine(object):
-    def __init__(self):
-        pass
+class FCN_Engine(object):
 
-pass
+    def __init__(self, fcn_config = None, solver_config = None):
 
+        self.model  = FullyConnectedNet(fcn_config)
+        self.solver = Solver(self.model, solver_config)
+
+    def show_history(self):
+        ''' show the history of training process '''
+
+        plt.rcParams['figure.figsize'] = (10.0, 8.0)
+        plt.rcParams['image.interpolation'] = 'nearest'
+        plt.rcParams['image.cmap'] = 'gray'
+
+        plt.subplot(2, 1, 1)
+        plt.plot(self.solver.loss_history)
+        plt.xlabel('Iteration'); plt.ylabel('Loss'); plt.title('Loss history')
+
+        plt.subplot(2, 1, 2)
+        plt.plot(self.solver.train_acc_history, label='train')
+        plt.plot(self.solver.val_acc_history, label='val')
+        plt.xlabel('Epoch'); plt.ylabel('Accuracy')
+        plt.title('Classification accuracy history')
+
+        fig_version = time.strftime("%Y%m%d%H%M%S", time.localtime(int(time.time())))
+        plt.savefig('./history_details/history_details_%s.png' % fig_version, dpi=400)
+        plt.show(); plt.close()
+
+    def fcn_classifier(self, show_hist = True):
+        '''
+        step - 1. train a fcn_classifier
+        step - 2. show the training-curve  [-optional-]
+        step - 3. predict the test_date
+        '''
+
+        self.solver.train()
+
+        if show_hist: self.show_history()
+
+        self.solver.predict()
 if __name__ == '__main__':
 
-    num_inputs = 2
-    input_shape = (4, 5, 6)
-    output_dim = 3
+    #---------------------------------------------------------
+    #                  parameters config
+    #---------------------------------------------------------
+    fcn_config = {
+        'input_dim'     : 3 * 32 * 32,
+        'hidden_dims'   : [100, 100, 100, 100],  # TODO
+        'num_classes'   : 10,
+        'dropout'       : 0.0,
+        'use_batchnorm' : False,
+        'weights_scale' : 2.5e-2,
+        'reg'           : 2e-2,
+        'dtype'         : np.float64,
+        'seed'          : None
+    }
+    #---------------------------------------------------------
+    solver_config = {
+        'update_rule'   : 'adam',
+        'learning_rate' : 3e-4,    # TODO
+        'lr_decay'      : 0.90,
+        'num_epochs'    : 10,      # TODO
+        'batch_size'    : 64,      # TODO
+        'verbose'       : True
+    }
+    #---------------------------------------------------------
 
-    input_size = num_inputs * np.prod(input_shape)
-    weight_size = output_dim * np.prod(input_shape)
-
-    x = np.linspace(-0.1, 0.5, num=input_size).reshape(num_inputs, *input_shape)
-    w = np.linspace(-0.2, 0.3, num=weight_size).reshape(np.prod(input_shape), output_dim)
-    b = np.linspace(-0.3, 0.1, num=output_dim)
-
-    print(x.shape, w.shape, b.shape)
-
-    out, _ = affine_forward(x, w, b)
-    correct_out = np.array([[ 1.49834967,  1.70660132,  1.91485297],
-                            [ 3.25553199,  3.5141327,   3.77273342]])
-    
+    fcn_engine = FCN_Engine(fcn_config, solver_config)
+    fcn_engine.fcn_classifier()
