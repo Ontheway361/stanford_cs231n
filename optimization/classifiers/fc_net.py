@@ -166,7 +166,7 @@ class FullyConnectedNet(object):
             Wi = 'W' + str(i)
             bi = 'b' + str(i)
             gammai = 'gamma' + str(i)
-            betai = 'beta' + str(i)
+            betai  = 'beta' + str(i)
 
             self.params[Wi] = self.weights_scale * np.random.randn(layer_dim[i - 1], layer_dim[i])
             self.params[bi] = np.zeros((layer_dim[i]))

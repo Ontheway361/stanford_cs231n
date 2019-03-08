@@ -99,9 +99,9 @@ def relu_backward(dout, cache):
     return dx
 
 def batchnorm_forward(x, gamma, beta, bn_param):
-    """
-    Forward pass for batch normalization.
 
+    """
+    -------------------------------------------------------------------------------
     During training the sample mean and (uncorrected) sample variance are
     computed from minibatch statistics and used to normalize the incoming data.
     During training we also keep an exponentially decaying running mean of the mean
@@ -120,7 +120,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     this implementation we have chosen to use running averages instead since
     they do not require an additional estimation step; the torch7 implementation
     of batch normalization also uses running averages.
-
+    -------------------------------------------------------------------------------
     Input:
     - x: Data of shape (N, D)
     - gamma: Scale parameter of shape (D,)
@@ -135,7 +135,13 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     Returns a tuple of:
     - out: of shape (N, D)
     - cache: A tuple of values needed in the backward pass
+    -------------------------------------------------------------------------------
+    step - 1. normalize the batch-samples
+    step - 2. scale and shift the x_normalized
+    step - 3. put the variables into cache
+    -------------------------------------------------------------------------------
     """
+
     mode = bn_param['mode']
     eps  = bn_param.get('eps', 1e-5)
     momentum = bn_param.get('momentum', 0.9)
@@ -146,19 +152,6 @@ def batchnorm_forward(x, gamma, beta, bn_param):
 
     out, cache = None, None
     if mode == 'train':
-        #############################################################################
-        # TODO: Implement the training-time forward pass for batch normalization.   #
-        # Use minibatch statistics to compute the mean and variance, use these      #
-        # statistics to normalize the incoming data, and scale and shift the        #
-        # normalized data using gamma and beta.                                     #
-        #                                                                           #
-        # You should store the output in the variable out. Any intermediates that   #
-        # you need for the backward pass should be stored in the cache variable.    #
-        #                                                                           #
-        # You should also use your computed sample mean and variance together with  #
-        # the momentum variable to update the running mean and running variance,    #
-        # storing your result in the running_mean and running_var variables.        #
-        #############################################################################
 
         sample_mean = np.mean(x, axis = 0)
         sample_var = np.var(x, axis = 0)
@@ -166,35 +159,24 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         x_normalized = (x - sample_mean) / np.sqrt(sample_var + eps)
         out = gamma * x_normalized + beta
 
-        cache = (x, sample_mean, sample_var, x_normalized, beta, gamma, eps)
+        cache = (x, sample_mean, sample_var, x_normalized, beta, gamma, eps)    # TODO
 
         # update running_mean and runing_var
         bn_param['running_mean'] = momentum * running_mean + (1 - momentum) * sample_mean
         bn_param['running_var'] = momentum * running_var + (1 - momentum) * sample_var
 
-        #############################################################################
-      #                             END OF YOUR CODE                              #
-      #############################################################################
     elif mode == 'test':
-        #############################################################################
-      # TODO: Implement the test-time forward pass for batch normalization. Use   #
-      # the running mean and variance to normalize the incoming data, then scale  #
-      # and shift the normalized data using gamma and beta. Store the result in   #
-      # the out variable.                                                         #
-      #############################################################################
+
         x_normalized = (x - running_mean) / np.sqrt(running_var + eps)
         out = gamma * x_normalized + beta
-        #############################################################################
-        #                             END OF YOUR CODE                              #
-        #############################################################################
+
     else: raise ValueError('Invalid forward batchnorm mode "%s"' % mode)
 
     return out, cache
 
 def batchnorm_backward(dout, cache):
     """
-    Backward pass for batch normalization.
-
+    -------------------------------------------------------------------------------
     For this implementation, you should write out a computation graph for
     batch normalization on paper and propagate gradients backward through
     intermediate nodes.
@@ -207,25 +189,22 @@ def batchnorm_backward(dout, cache):
     - dx: Gradient with respect to inputs x, of shape (N, D)
     - dgamma: Gradient with respect to scale parameter gamma, of shape (D,)
     - dbeta: Gradient with respect to shift parameter beta, of shape (D,)
+    -------------------------------------------------------------------------------
+
+    -------------------------------------------------------------------------------
     """
     dx, dgamma, dbeta = None, None, None
-    #############################################################################
-    # TODO: Implement the backward pass for batch normalization. Store the      #
-    # results in the dx, dgamma, and dbeta variables.                           #
-    #############################################################################
 
     (x, sample_mean, sample_var, x_normalized, beta, gamma, eps) = cache
     N = x.shape[0]
-    dbeta = np.sum(dout, axis=0)
+    dbeta = np.sum(dout, axis = 0)
     dgamma = np.sum(x_normalized*dout, axis = 0)
-    dx_normalized = gamma* dout
-    dsample_var = np.sum(-1.0/2*dx_normalized*(x-sample_mean)/(sample_var+eps)**(3.0/2), axis =0)
-    dsample_mean = np.sum(-1/np.sqrt(sample_var+eps)* dx_normalized, axis = 0) + 1.0/N*dsample_var *np.sum(-2*(x-sample_mean), axis = 0)
-    dx = 1/np.sqrt(sample_var+eps)*dx_normalized + dsample_var*2.0/N*(x-sample_mean) + 1.0/N*dsample_mean
+    dx_normalized = gamma * dout
 
-    #############################################################################
-    #                             END OF YOUR CODE                              #
-    #############################################################################
+    # just focus on high-level
+    dsample_var = np.sum(-1.0/2*dx_normalized*(x-sample_mean)/(sample_var+eps)**(3.0/2), axis=0)
+    dsample_mean = np.sum(-1/np.sqrt(sample_var+eps)* dx_normalized, axis=0) + 1.0/N*dsample_var *np.sum(-2*(x-sample_mean), axis=0)
+    dx = 1/np.sqrt(sample_var+eps)*dx_normalized + dsample_var*2.0/N*(x-sample_mean) + 1.0/N*dsample_mean
 
     return dx, dgamma, dbeta
 
@@ -242,26 +221,17 @@ def batchnorm_backward_alt(dout, cache):
 
     Inputs / outputs: Same as batchnorm_backward
     """
+
     dx, dgamma, dbeta = None, None, None
-    #############################################################################
-    # TODO: Implement the backward pass for batch normalization. Store the      #
-    # results in the dx, dgamma, and dbeta variables.                           #
-    #                                                                           #
-    # After computing the gradient with respect to the centered inputs, you     #
-    # should be able to compute gradients with respect to the inputs in a       #
-    # single statement; our implementation fits on a single 80-character line.  #
-    #############################################################################
     (x, sample_mean, sample_var, x_normalized, beta, gamma, eps) = cache
     N = x.shape[0]
     dbeta = np.sum(dout, axis=0)
-    dgamma = np.sum(x_normalized*dout, axis = 0)
-    dx_normalized = gamma* dout
-    dsample_var = np.sum(-1.0/2*dx_normalized*(x-sample_mean)/(sample_var+eps)**(3.0/2), axis =0)
-    dsample_mean = np.sum(-1/np.sqrt(sample_var+eps)* dx_normalized, axis = 0) + 1.0/N*dsample_var *np.sum(-2*(x-sample_mean), axis = 0)
+    dgamma = np.sum(x_normalized*dout, axis=0)
+    dx_normalized = gamma * dout
+
+    dsample_var = np.sum(-1.0/2*dx_normalized*(x-sample_mean)/(sample_var+eps)**(3.0/2), axis=0)
+    dsample_mean = np.sum(-1/np.sqrt(sample_var+eps)* dx_normalized, axis=0) + 1.0/N*dsample_var *np.sum(-2*(x-sample_mean), axis=0)
     dx = 1/np.sqrt(sample_var+eps)*dx_normalized + dsample_var*2.0/N*(x-sample_mean) + 1.0/N*dsample_mean
-    #############################################################################
-    #                             END OF YOUR CODE                              #
-    #############################################################################
 
     return dx, dgamma, dbeta
 
@@ -284,29 +254,21 @@ def dropout_forward(x, dropout_param):
     - cache: A tuple (dropout_param, mask). In training mode, mask is the dropout
       mask that was used to multiply the input; in test mode, mask is None.
     """
+
     p, mode = dropout_param['p'], dropout_param['mode']
+
     if 'seed' in dropout_param: np.random.seed(dropout_param['seed'])
 
     mask, out = None, None
 
     if mode == 'train':
-        ###########################################################################
-      # TODO: Implement the training phase forward pass for inverted dropout.   #
-      # Store the dropout mask in the mask variable.                            #
-      ###########################################################################
+
         mask = (np.random.rand(*x.shape)) < (1-p)  # TODO
         out = mask * x
-        ###########################################################################
-        #                            END OF YOUR CODE                             #
-        ###########################################################################
-    elif mode == 'test':
-        ###########################################################################
-      # TODO: Implement the test phase forward pass for inverted dropout.       #
-      ###########################################################################
-        out = x * (1-p)
-        ###########################################################################
-      #                            END OF YOUR CODE                             #
-      ###########################################################################
+
+    elif mode == 'test': out = x * (1-p)
+
+    else: raise ValueError('Invalid forward dropout mode "%s"' % mode)
 
     cache = (dropout_param, mask)
     out = out.astype(x.dtype, copy = False)
@@ -325,16 +287,12 @@ def dropout_backward(dout, cache):
     mode = dropout_param['mode']
 
     dx = None
-    if mode == 'train':
-        ###########################################################################
-      # TODO: Implement the training phase backward pass for inverted dropout.  #
-      ###########################################################################
-        dx = mask * dout
-        ###########################################################################
-      #                            END OF YOUR CODE                             #
-      ###########################################################################
-    elif mode == 'test':
-        dx = dout * p
+    if mode == 'train': dx = mask * dout
+
+    elif mode == 'test': dx = dout * p   # TODO
+
+    else: raise ValueError('Invalid backward dropout mode %s' % mode)
+
     return dx
 
 def conv(X, w, b, conv_param):
@@ -354,18 +312,16 @@ def conv(X, w, b, conv_param):
     X = np.pad(X, pad_width = npad, mode = 'constant', constant_values = 0)
 
     # conv
-    H_o = 1 + (H + 2 * pad - HH) / stride
-    W_o = 1 + (W + 2 * pad - WW) / stride
+    H_o = int(np.floor(1 + (H + 2 * pad - HH) / stride))
+    W_o = int(np.floor(1 + (W + 2 * pad - WW) / stride))
+
     Y = np.zeros((H_o, W_o))
 
     for i in range(H_o):
-      for j in range(W_o):
-        y_sum = 0
-        for k in range(HH):
-            for m in range(WW):
-                y_sum += np.sum(X[:, i * stride - pad + k + 1, j * stride - pad + m + 1] * w[:, k, m])
-
-        Y[i, j] = y_sum + b
+        for j in range(W_o):
+            left_top_y, left_top_x = i * stride - pad + 1, j * stride - pad + 1
+            conv_map = X[:, left_top_y:(left_top_y + HH), left_top_x:(left_top_x + HH)] * w
+            Y[i, j] = np.sum(conv_map) + b
 
     return Y
 
@@ -409,9 +365,6 @@ def conv_forward_naive(x, w, b, conv_param):
 
     out = np.array(out)
 
-    #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
     cache = (x, w, b, conv_param)
     return out, cache
 
@@ -428,10 +381,9 @@ def conv_backward_naive(dout, cache):
     - dw: Gradient with respect to w
     - db: Gradient with respect to b
     """
+
     dx, dw, db = None, None, None
-    #############################################################################
-    # TODO: Implement the convolutional backward pass.                          #
-    #############################################################################
+
     x, w, b, conv_param = cache
     stride = conv_param['stride']
     pad = conv_param['pad']
@@ -439,17 +391,17 @@ def conv_backward_naive(dout, cache):
     F, _, HH, WW = w.shape
     _, _, H_o, W_o = dout.shape
 
-    # pading
-    npad = ((0, 0), (0, 0), (pad, pad), (pad, pad))
+    npad  = ((0, 0), (0, 0), (pad, pad), (pad, pad))
     x_pad = np.pad(x, pad_width = npad, mode = 'constant', constant_values = 0)
 
     db = np.zeros((F))
-    for n in range(N):
-        for i in range(H_o):
-            for j in range(W_o):
-                db = db + dout[n, :, i, j]
+
+    temp = dout.transpose(1, 0, 2,3)
+    for f in range(F):
+        db[f] = np.sum(temp[f, :, :, :])
 
     dw, dx_pad = np.zeros(w.shape), np.zeros(x_pad.shape)
+
     for n in range(N):
         for f in range(F):
             for i in range(H_o):
@@ -458,12 +410,7 @@ def conv_backward_naive(dout, cache):
                     dw[f] = dw[f] + dout[n, f, i, j] * current_x_matrix
                     dx_pad[n, :, (i * stride):(i * stride + HH), (j * stride):(j * stride + WW)] += w[f] * dout[n, f, i, j]
 
-    # original
-    # dx = dx_pad[:, :, 1: H + 1, 1: W + 1]
     dx = dx_pad[:, :, pad: H + pad, pad: W + pad]
-    #############################################################################
-    #                             END OF YOUR CODE                              #
-    #############################################################################
     return dx, dw, db
 
 def max_pool_forward_naive(x, pool_param):
@@ -485,7 +432,7 @@ def max_pool_forward_naive(x, pool_param):
     N, C, H, W = x.shape
     pool_height, pool_width, stride = pool_param['pool_height'], pool_param['pool_width'] , pool_param['stride']
 
-    H_out, W_out = 1 + (H - pool_height) / stride, 1 + (W - pool_width) / stride
+    H_out, W_out = int(np.floor(1 + (H - pool_height) / stride)), int(np.floor(1 + (W - pool_width) / stride))
     out = np.zeros((N, C, H_out, W_out))
 
     for n in range(N):

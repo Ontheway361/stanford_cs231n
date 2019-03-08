@@ -44,6 +44,7 @@ class Solver(object):
 
         self.model         = model
         self.data          = load_CIFAR10()
+        self.num_train     = solver_config.pop('num_train', None)
         self.update_rule   = solver_config.pop('update_rule', 'adam')
         self.learning_rate = solver_config.pop('learning_rate', 1e-3)
         self.lr_decay      = solver_config.pop('lr_decay', 1.0)
@@ -57,6 +58,11 @@ class Solver(object):
 
         if not hasattr(optim, self.update_rule):
             raise ValueError('Invalid update_rule "%s"' % self.update_rule)
+
+        if self.num_train:
+            mask = np.random.choice(self.data['X_train'].shape[0], self.num_train, replace = True)
+            self.data['X_train'] = self.data['X_train'][mask]
+            self.data['y_train'] = self.data['y_train'][mask]
 
         self.update_rule = getattr(optim, self.update_rule)  # function call here
 
@@ -104,7 +110,7 @@ class Solver(object):
                 self.optim_configs[p_name] = next_config
 
 
-    def check_accuracy(self, X, y, num_samples = None, batch_size = 1000):
+    def check_accuracy(self, X, y, num_samples = None, batch_size = 500):
         """
         Check accuracy of the model on the provided data.
 

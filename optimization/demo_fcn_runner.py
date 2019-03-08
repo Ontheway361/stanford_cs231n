@@ -52,6 +52,7 @@ class FCN_Engine(object):
         if show_hist: self.show_history()
 
         self.solver.predict()
+
 if __name__ == '__main__':
 
     #---------------------------------------------------------
@@ -59,25 +60,26 @@ if __name__ == '__main__':
     #---------------------------------------------------------
     fcn_config = {
         'input_dim'     : 3 * 32 * 32,
-        'hidden_dims'   : [100, 100, 100, 100],  # TODO
+        'hidden_dims'   : [1024, 100, 10],  # TODO
         'num_classes'   : 10,
-        'dropout'       : 0.0,
+        'dropout'       : 0.1,
         'use_batchnorm' : False,
-        'weights_scale' : 2.5e-2,
-        'reg'           : 2e-2,
+        'weights_scale' : 2.5e-2,   #   5e-2
+        'reg'           : 1e-2,
         'dtype'         : np.float64,
         'seed'          : None
     }
     #---------------------------------------------------------
     solver_config = {
+        'num_train'     : 40000,
         'update_rule'   : 'adam',
-        'learning_rate' : 3e-4,    # TODO
-        'lr_decay'      : 0.90,
-        'num_epochs'    : 10,      # TODO
-        'batch_size'    : 64,      # TODO
+        'learning_rate' : 5e-4,    # TODO
+        'lr_decay'      : 0.95,
+        'num_epochs'    : 25,      # TODO
+        'batch_size'    : 100,     # TODO
         'verbose'       : True
     }
     #---------------------------------------------------------
 
     fcn_engine = FCN_Engine(fcn_config, solver_config)
-    fcn_engine.fcn_classifier()
+    fcn_engine.fcn_classifier(False)

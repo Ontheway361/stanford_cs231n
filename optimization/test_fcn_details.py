@@ -18,6 +18,7 @@ from utils.gradient_check import eval_numerical_gradient, eval_numerical_gradien
 
 def rel_error(x, y):
     """ returns relative error """
+    
     return np.max(np.abs(x - y) / (np.maximum(1e-8, np.abs(x) + np.abs(y))))
 
 if __name__ == '__main__':
