@@ -29,16 +29,18 @@ def load_CIFAR_batch(filename):
         datadict = pickle.load(f, encoding = 'bytes')
         X = datadict[b'data']
         Y = datadict[b'labels']
-        X = X.reshape(10000, 3, 32, 32).transpose(0,2,3,1).astype("float")
+        # X = X.reshape(10000, 3, 32, 32).transpose(0,2,3,1).astype("float")
+        X = X.reshape(10000, 3, 32, 32).astype('float')
         Y = np.array(Y)
         return X, Y
 
 def load_CIFAR10(num_vaild = 1000):
     ''' load all of cifar '''
 
+    print('loading cifar10 dataset, please wait ...')
     # file_path = '/Users/zhangyuping/Documents/stanford_cs231n/dataset/cifar-10-batches-py/'
     file_path = '/home/lujie/Documents/stanford_cs231n/dataset/cifar-10-batches-py/'
-    
+
     xs = []; ys = []
     for b in range(1,6):
         f = os.path.join(file_path, 'data_batch_%d' % (b, ))

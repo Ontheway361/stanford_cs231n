@@ -38,6 +38,8 @@ class Solver(object):
         - verbose: Boolean; if set to false then no output will be printed during training.
         """
 
+        print('set parameters for solver ...')
+
         if not model: raise TypeError('model is None, please design the architecure of networks ...')
 
         if not solver_config: print('solver_config is None, nets adopts default parameters ...')
@@ -110,7 +112,7 @@ class Solver(object):
                 self.optim_configs[p_name] = next_config
 
 
-    def check_accuracy(self, X, y, num_samples = None, batch_size = 500):
+    def check_accuracy(self, X, y, num_samples = None, batch_size = 1000):
         """
         Check accuracy of the model on the provided data.
 
@@ -151,9 +153,11 @@ class Solver(object):
     def train(self):
         ''' Run optimization to train the model. '''
 
+        print('training the classifier, please wait ...')
+
         num_train = self.data['X_train'].shape[0]
-        iterations_per_epoch = int(max(num_train / self.batch_size, 1))
-        num_iterations = int(self.num_epochs * iterations_per_epoch)
+        iterations_per_epoch = max(num_train // self.batch_size, 1)
+        num_iterations = self.num_epochs * iterations_per_epoch
 
         for t in range(num_iterations):
 
@@ -188,12 +192,13 @@ class Solver(object):
         # At the end of training swap the best params into the model
         self.model.params = self.best_params
 
+
     def predict(self):
         ''' predict the X_test with best_model '''
-
+        del self.data['X_train'], self.data['y_train']
         pred_val  = np.argmax(self.model.loss(self.data['X_val']), axis=1)
-        pred_test = np.argmax(self.model.loss(self.data['X_test']), axis=1)
+        pred_test = np.argmax(self.model.loss(self.data['X_test'][:1000]), axis=1)
         val_acc   = (pred_val == self.data['y_val']).mean()
-        test_acc  = (pred_test == self.data['y_test']).mean()
+        test_acc  = (pred_test == self.data['y_test'][:1000]).mean()
 
         print('%s\nval_acc : %6.4f,\ttest_acc : %6.4f\n%s' % ('-'*75, val_acc, test_acc, '-'*75))

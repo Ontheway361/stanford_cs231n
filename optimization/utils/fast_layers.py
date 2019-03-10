@@ -8,6 +8,7 @@ author: lujie
 
 import numpy as np
 from utils.im2col import *
+from IPython import embed
 
 try:
     from utils.im2col_cython import col2im_cython, im2col_cython
@@ -16,7 +17,6 @@ except ImportError:
     print('run the following from the cs231n directory and try again:')
     print('python setup.py build_ext --inplace')
     print('You may also need to restart your iPython kernel')
-
 
 
 def conv_forward_im2col(x, w, b, conv_param):
@@ -46,7 +46,7 @@ def conv_forward_im2col(x, w, b, conv_param):
     return out, cache
 
 
-def conv_forward_strides(x, w, b, conv_param):
+def conv_forward_fast(x, w, b, conv_param):
     ''' '''
 
     N, C, H, W = x.shape
@@ -64,8 +64,8 @@ def conv_forward_strides(x, w, b, conv_param):
     # Figure out output dimensions
     H += 2 * pad
     W += 2 * pad
-    out_h = (H - HH) / stride + 1
-    out_w = (W - WW) / stride + 1
+    out_h = (H - HH) // stride + 1
+    out_w = (W - WW) // stride + 1
 
     # Perform an im2col operation by picking clever strides
     shape = (C, HH, WW, N, out_h, out_w)
@@ -77,7 +77,7 @@ def conv_forward_strides(x, w, b, conv_param):
     x_cols.shape = (C * HH * WW, N * out_h * out_w)
 
     # Now all our convolutions are a big matrix multiply
-    res = w.reshape(F, -1).dot(x_cols) + b.reshape(-1, 1)
+    res = w.reshape(F, -1).dot(x_cols) + b.reshape(-1, 1)   # BUG
 
     # Reshape the output
     res.shape = (F, N, out_h, out_w)
@@ -92,7 +92,7 @@ def conv_forward_strides(x, w, b, conv_param):
     return out, cache
 
 
-def conv_backward_strides(dout, cache):
+def conv_backward_fast(dout, cache):
     ''' '''
 
     x, w, b, conv_param, x_cols = cache
@@ -134,10 +134,6 @@ def conv_backward_im2col(dout, cache):
     return dx, dw, db
 
 
-conv_forward_fast = conv_forward_strides
-conv_backward_fast = conv_backward_strides
-
-
 def max_pool_forward_fast(x, pool_param):
     '''
     A fast implementation of the forward pass for a max pooling layer.
@@ -150,10 +146,10 @@ def max_pool_forward_fast(x, pool_param):
 
     N, C, H, W = x.shape
     pool_height, pool_width = pool_param['pool_height'], pool_param['pool_width']
-    stride = pool_param['stride']
+    stride = pool_param['pool_stride']
 
     same_size = pool_height == pool_width == stride
-    tiles = H % pool_height == 0 and W % pool_width == 0
+    tiles = (H % pool_height == 0) and (W % pool_width == 0)
     if same_size and tiles:
         out, reshape_cache = max_pool_forward_reshape(x, pool_param)
         cache = ('reshape', reshape_cache)
@@ -167,11 +163,10 @@ def max_pool_backward_fast(dout, cache):
     """
     A fast implementation of the backward pass for a max pooling layer.
 
-    This switches between the reshape method an the im2col method depending on
+    This switches between the reshape method and the im2col method depending on
     which method was used to generate the cache.
     """
     method, real_cache = cache
-
     if method == 'reshape': return max_pool_backward_reshape(dout, real_cache)
     elif method == 'im2col': return max_pool_backward_im2col(dout, real_cache)
     else: raise ValueError('Unrecognized method "%s"' % method)
@@ -186,12 +181,11 @@ def max_pool_forward_reshape(x, pool_param):
     """
     N, C, H, W = x.shape
     pool_height, pool_width = pool_param['pool_height'], pool_param['pool_width']
-    stride = pool_param['stride']
+    stride = pool_param['pool_stride']
     assert pool_height == pool_width == stride, 'Invalid pool params'
     assert H % pool_height == 0
     assert W % pool_height == 0
-    x_reshaped = x.reshape(N, C, H / pool_height, pool_height,
-                           W / pool_width, pool_width)
+    x_reshaped = x.reshape(N, C, (H // pool_height), pool_height, (W // pool_width), pool_width)
     out = x_reshaped.max(axis=3).max(axis=4)
 
     cache = (x, x_reshaped, out)
@@ -220,6 +214,9 @@ def max_pool_backward_reshape(dout, cache):
     dx_reshaped = np.zeros_like(x_reshaped)
     out_newaxis = out[:, :, :, np.newaxis, :, np.newaxis]
     mask = (x_reshaped == out_newaxis)
+
+    dout = dout.reshape(out.shape)
+
     dout_newaxis = dout[:, :, :, np.newaxis, :, np.newaxis]
     dout_broadcast, _ = np.broadcast_arrays(dout_newaxis, dx_reshaped)
     dx_reshaped[mask] = dout_broadcast[mask]
@@ -238,7 +235,7 @@ def max_pool_forward_im2col(x, pool_param):
     """
     N, C, H, W = x.shape
     pool_height, pool_width = pool_param['pool_height'], pool_param['pool_width']
-    stride = pool_param['stride']
+    stride = pool_param['pool_stride']
 
     assert (H - pool_height) % stride == 0, 'Invalid height'
     assert (W - pool_width) % stride == 0, 'Invalid width'
@@ -266,7 +263,7 @@ def max_pool_backward_im2col(dout, cache):
     x, x_cols, x_cols_argmax, pool_param = cache
     N, C, H, W = x.shape
     pool_height, pool_width = pool_param['pool_height'], pool_param['pool_width']
-    stride = pool_param['stride']
+    stride = pool_param['pool_stride']
 
     dout_reshaped = dout.transpose(2, 3, 0, 1).flatten()
     dx_cols = np.zeros_like(x_cols)

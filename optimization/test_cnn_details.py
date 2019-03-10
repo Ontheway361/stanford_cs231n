@@ -15,6 +15,7 @@ from utils.solver import Solver
 from utils.layers import *
 from utils.optim import sgd, sgd_momentum, rmsprop, adam
 from classifiers.fc_net import TwoLayerNet, FullyConnectedNet
+from classifiers.cnn import ConvNet
 from utils.gradient_check import eval_numerical_gradient, eval_numerical_gradient_array
 
 def rel_error(x, y):
@@ -103,24 +104,24 @@ if __name__ == '__main__':
     # plt.subplot(2, 3, 6); imshow_noax(kitten_edge); plt.title('kitten-Edges')
     # plt.show()
     #
-    x = np.random.randn(4, 3, 5, 5)
-    w = np.random.randn(2, 3, 3, 3)
-    b = np.random.randn(2,)
-    dout = np.random.randn(4, 2, 5, 5)
-    conv_param = {'stride': 1, 'pad': 1}
-
-    dx_num = eval_numerical_gradient_array(lambda x: conv_forward_naive(x, w, b, conv_param)[0], x, dout)
-    dw_num = eval_numerical_gradient_array(lambda w: conv_forward_naive(x, w, b, conv_param)[0], w, dout)
-    db_num = eval_numerical_gradient_array(lambda b: conv_forward_naive(x, w, b, conv_param)[0], b, dout)
-
-    out, cache = conv_forward_naive(x, w, b, conv_param)
-    dx, dw, db = conv_backward_naive(dout, cache)
-
-    # Your errors should be around 1e-9'
-    print('Testing conv_backward_naive function')
-    print('dx error: ', rel_error(dx, dx_num))
-    print('dw error: ', rel_error(dw, dw_num))
-    print('db error: ', rel_error(db, db_num))
+    # x = np.random.randn(4, 3, 5, 5)
+    # w = np.random.randn(2, 3, 3, 3)
+    # b = np.random.randn(2,)
+    # dout = np.random.randn(4, 2, 5, 5)
+    # conv_param = {'stride': 1, 'pad': 1}
+    #
+    # dx_num = eval_numerical_gradient_array(lambda x: conv_forward_naive(x, w, b, conv_param)[0], x, dout)
+    # dw_num = eval_numerical_gradient_array(lambda w: conv_forward_naive(x, w, b, conv_param)[0], w, dout)
+    # db_num = eval_numerical_gradient_array(lambda b: conv_forward_naive(x, w, b, conv_param)[0], b, dout)
+    #
+    # out, cache = conv_forward_naive(x, w, b, conv_param)
+    # dx, dw, db = conv_backward_naive(dout, cache)
+    #
+    # # Your errors should be around 1e-9'
+    # print('Testing conv_backward_naive function')
+    # print('dx error: ', rel_error(dx, dx_num))
+    # print('dw error: ', rel_error(dw, dw_num))
+    # print('db error: ', rel_error(db, db_num))
 
     # x_shape = (2, 3, 4, 4)
     # x = np.linspace(-0.3, 0.4, num=np.prod(x_shape)).reshape(x_shape)
@@ -144,3 +145,214 @@ if __name__ == '__main__':
     # # Compare your output with ours. Difference should be around 1e-8.
     # print ('Testing max_pool_forward_naive function:')
     # print ('difference: ', rel_error(out, correct_out))
+
+    # x = np.random.randn(3, 2, 8, 8)
+    # dout = np.random.randn(3, 2, 4, 4)
+    # pool_param = {'pool_height': 2, 'pool_width': 2, 'stride': 2}
+    #
+    # dx_num = eval_numerical_gradient_array(lambda x: max_pool_forward_naive(x, pool_param)[0], x, dout)
+    #
+    # out, cache = max_pool_forward_naive(x, pool_param)
+    # dx = max_pool_backward_naive(dout, cache)
+    #
+    # # Your error should be around 1e-12
+    # print ('Testing max_pool_backward_naive function:')
+    # print ('dx error: ', rel_error(dx, dx_num))
+
+    # from utils.fast_layers import conv_forward_fast, conv_backward_fast
+    # from time import time
+    #
+    # x = np.random.randn(100, 3, 31, 31)
+    # w = np.random.randn(25, 3, 3, 3)
+    # b = np.random.randn(25,)
+    # dout = np.random.randn(100, 25, 16, 16)
+    # conv_param = {'stride': 2, 'pad': 1}
+    #
+    # t0 = time()
+    # out_naive, cache_naive = conv_forward_naive(x, w, b, conv_param)
+    # t1 = time()
+    # out_fast, cache_fast = conv_forward_fast(x, w, b, conv_param)
+    # t2 = time()
+    #
+    # print ('Testing conv_forward_fast:')
+    # print ('Naive: %fs' % (t1 - t0))
+    # print ('Fast: %fs' % (t2 - t1))
+    # print ('Speedup: %fx' % ((t1 - t0) / (t2 - t1)))
+    # print ('Difference: ', rel_error(out_naive, out_fast))
+    #
+    # t0 = time()
+    # dx_naive, dw_naive, db_naive = conv_backward_naive(dout, cache_naive)
+    # t1 = time()
+    # dx_fast, dw_fast, db_fast = conv_backward_fast(dout, cache_fast)
+    # t2 = time()
+    #
+    # print ('\nTesting conv_backward_fast:')
+    # print ('Naive: %fs' % (t1 - t0))
+    # print ('Fast: %fs' % (t2 - t1))
+    # print ('Speedup: %fx' % ((t1 - t0) / (t2 - t1)))
+    # print ('dx difference: ', rel_error(dx_naive, dx_fast))
+    # print ('dw difference: ', rel_error(dw_naive, dw_fast))
+    # print ('db difference: ', rel_error(db_naive, db_fast))
+
+    # from utils.fast_layers import max_pool_forward_fast, max_pool_backward_fast
+    # from time import time
+    #
+    # x = np.random.randn(100, 3, 32, 32)
+    # dout = np.random.randn(100, 3, 16, 16)
+    # pool_param = {'pool_height': 2, 'pool_width': 2, 'stride': 2}
+    #
+    # t0 = time()
+    # out_naive, cache_naive = max_pool_forward_naive(x, pool_param)
+    # t1 = time()
+    # out_fast, cache_fast = max_pool_forward_fast(x, pool_param)
+    # t2 = time()
+    #
+    # print ('Testing pool_forward_fast:')
+    # print ('Naive: %fs' % (t1 - t0))
+    # print ('fast: %fs' % (t2 - t1))
+    # print ('speedup: %fx' % ((t1 - t0) / (t2 - t1)))
+    # print ('difference: ', rel_error(out_naive, out_fast))
+    #
+    # t0 = time()
+    # dx_naive = max_pool_backward_naive(dout, cache_naive)
+    # t1 = time()
+    # dx_fast = max_pool_backward_fast(dout, cache_fast)
+    # t2 = time()
+    #
+    # print ('\nTesting pool_backward_fast:')
+    # print ('Naive: %fs' % (t1 - t0))
+    # print ('speedup: %fx' % ((t1 - t0) / (t2 - t1)))
+    # print ('dx difference: ', rel_error(dx_naive, dx_fast))
+
+    # from utils.layer_utils import conv_relu_pool_forward, conv_relu_pool_backward
+    # x = np.random.randn(2, 3, 16, 16)
+    # w = np.random.randn(3, 3, 3, 3)
+    # b = np.random.randn(3,)
+    # dout = np.random.randn(2, 3, 8, 8)
+    # conv_param = {'stride': 1, 'pad': 1}
+    # pool_param = {'pool_height': 2, 'pool_width': 2, 'stride': 2}
+    #
+    # out, cache = conv_relu_pool_forward(x, w, b, conv_param, pool_param)
+    # dx, dw, db = conv_relu_pool_backward(dout, cache)
+    #
+    # dx_num = eval_numerical_gradient_array(lambda x: conv_relu_pool_forward(x, w, b, conv_param, pool_param)[0], x, dout)
+    # dw_num = eval_numerical_gradient_array(lambda w: conv_relu_pool_forward(x, w, b, conv_param, pool_param)[0], w, dout)
+    # db_num = eval_numerical_gradient_array(lambda b: conv_relu_pool_forward(x, w, b, conv_param, pool_param)[0], b, dout)
+    #
+    # print('Testing conv_relu_pool')
+    # print('dx error: ', rel_error(dx_num, dx))
+    # print('dw error: ', rel_error(dw_num, dw))
+    # print('db error: ', rel_error(db_num, db))
+
+    # from utils.layer_utils import conv_relu_forward, conv_relu_backward
+    # x = np.random.randn(2, 3, 8, 8)
+    # w = np.random.randn(3, 3, 3, 3)
+    # b = np.random.randn(3,)
+    # dout = np.random.randn(2, 3, 8, 8)
+    # conv_param = {'stride': 1, 'pad': 1}
+    #
+    # out, cache = conv_relu_forward(x, w, b, conv_param)
+    # dx, dw, db = conv_relu_backward(dout, cache)
+    #
+    # dx_num = eval_numerical_gradient_array(lambda x: conv_relu_forward(x, w, b, conv_param)[0], x, dout)
+    # dw_num = eval_numerical_gradient_array(lambda w: conv_relu_forward(x, w, b, conv_param)[0], w, dout)
+    # db_num = eval_numerical_gradient_array(lambda b: conv_relu_forward(x, w, b, conv_param)[0], b, dout)
+    #
+    # print ('Testing conv_relu:')
+    # print ('dx error: ', rel_error(dx_num, dx))
+    # print ('dw error: ', rel_error(dw_num, dw))
+    # print ('db error: ', rel_error(db_num, db))
+
+    # model = ThreeLayerConvNet()
+    #
+    # N = 50
+    # X = np.random.randn(N, 3, 32, 32)
+    # y = np.random.randint(10, size=N)
+    #
+    # loss, grads = model.loss(X, y)
+    # print('Initial loss (no regularization): ', loss)
+    #
+    # model.reg = 0.5
+    # loss, grads = model.loss(X, y)
+    # print('Initial loss (with regularization): ', loss)
+
+    # num_inputs = 2
+    # input_dim = (3, 16, 16)
+    # reg = 0.0
+    # num_classes = 10
+    # X = np.random.randn(num_inputs, *input_dim)
+    # y = np.random.randint(num_classes, size=num_inputs)
+    #
+    # model = ThreeLayerConvNet(num_filters=3, filter_size=3,
+    #                           input_dim=input_dim, hidden_dim=7,
+    #                           dtype=np.float64)
+    # loss, grads = model.loss(X, y)
+    # for param_name in sorted(grads):
+    #     f = lambda _: model.loss(X, y)[0]
+    #     param_grad_num = eval_numerical_gradient(f, model.params[param_name], verbose=False, h=1e-6)
+    #     e = rel_error(param_grad_num, grads[param_name])
+    #     print ('%s max relative error: %e' % (param_name, rel_error(param_grad_num, grads[param_name])))
+
+    # N, C, H, W = 2, 3, 4, 5
+    # x = 4 * np.random.randn(N, C, H, W) + 10
+    #
+    # print ('Before spatial batch normalization:')
+    # print ('  Shape: ', x.shape)
+    # print ('  Means: ', x.mean(axis=(0, 2, 3)))
+    # print ('  Stds: ', x.std(axis=(0, 2, 3)))
+    #
+    # # Means should be close to zero and stds close to one
+    # gamma, beta = np.ones(C), np.zeros(C)
+    # bn_param = {'mode': 'train'}
+    # out, _ = spatial_batchnorm_forward(x, gamma, beta, bn_param)
+    # print ('After spatial batch normalization:')
+    # print ('  Shape: ', out.shape)
+    # print ('  Means: ', out.mean(axis=(0, 2, 3)))
+    # print ('  Stds: ', out.std(axis=(0, 2, 3)))
+    #
+    # # Means should be close to beta and stds close to gamma
+    # gamma, beta = np.asarray([3, 4, 5]), np.asarray([6, 7, 8])
+    # out, _ = spatial_batchnorm_forward(x, gamma, beta, bn_param)
+    # print ('After spatial batch normalization (nontrivial gamma, beta):')
+    # print ('  Shape: ', out.shape)
+    # print ('  Means: ', out.mean(axis=(0, 2, 3)))
+    # print ('  Stds: ', out.std(axis=(0, 2, 3)))
+
+    # N, C, H, W = 10, 4, 11, 12
+    #
+    # bn_param = {'mode': 'train'}
+    # gamma = np.ones(C)
+    # beta = np.zeros(C)
+    # for t in range(500):
+    #     x = 2.3 * np.random.randn(N, C, H, W) + 13
+    #     spatial_batchnorm_forward(x, gamma, beta, bn_param)
+    # bn_param['mode'] = 'test'
+    # x = 2.3 * np.random.randn(N, C, H, W) + 13
+    # a_norm, _ = spatial_batchnorm_forward(x, gamma, beta, bn_param)
+    #
+    # # Means should be close to zero and stds close to one, but will be
+    # # noisier than training-time forward passes.
+    # print ('After spatial batch normalization (test-time):')
+    # print ('  means: ', a_norm.mean(axis=(0, 2, 3)))
+    # print ('  stds: ', a_norm.std(axis=(0, 2, 3)))
+
+    N, C, H, W = 2, 3, 4, 5
+    x = 5 * np.random.randn(N, C, H, W) + 12
+    gamma = np.random.randn(C)
+    beta = np.random.randn(C)
+    dout = np.random.randn(N, C, H, W)
+
+    bn_param = {'mode': 'train'}
+    fx = lambda x: spatial_batchnorm_forward(x, gamma, beta, bn_param)[0]
+    fg = lambda a: spatial_batchnorm_forward(x, gamma, beta, bn_param)[0]
+    fb = lambda b: spatial_batchnorm_forward(x, gamma, beta, bn_param)[0]
+
+    dx_num = eval_numerical_gradient_array(fx, x, dout)
+    da_num = eval_numerical_gradient_array(fg, gamma, dout)
+    db_num = eval_numerical_gradient_array(fb, beta, dout)
+
+    _, cache = spatial_batchnorm_forward(x, gamma, beta, bn_param)
+    dx, dgamma, dbeta = spatial_batchnorm_backward(dout, cache)
+    print ('dx error: ', rel_error(dx_num, dx))
+    print ('dgamma error: ', rel_error(da_num, dgamma))
+    print ('dbeta error: ', rel_error(db_num, dbeta))
