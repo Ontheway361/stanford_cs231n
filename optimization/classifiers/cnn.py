@@ -42,7 +42,7 @@ class ConvNet(object):
 
       # set the default parameters for sandwich
 
-      sandwich = {
+      default_sandwich = {
           'num_filters' : 32,
           'filter_size' : 7,
           'padding'     : 'same',
@@ -53,7 +53,7 @@ class ConvNet(object):
       }
 
       self.input_dim     = cnn_config.pop('input_dim', 3 * 32 * 32)
-      self.sandwich1     = cnn_config.pop('sandwich1', sandwich)
+      self.sandwich1     = cnn_config.pop('sandwich1', default_sandwich)
       self.hidden_dim    = cnn_config.pop('hidden_dim', 100)
       self.num_classes   = cnn_config.pop('num_classes', 10)
       self.use_batchnorm = cnn_config.pop('use_batchnorm', False)
@@ -69,6 +69,7 @@ class ConvNet(object):
       self.bn_params = []
       if self.use_batchnorm:
           self.bn_params = [{'mode' : 'train'} for i in range(self.num_layers - 1)]
+
           self.params['gamma1'] = np.random.randn(self.sandwich1['num_filters'])
           self.params['beta1']  = np.random.randn(self.sandwich1['num_filters'])
 
@@ -135,7 +136,9 @@ class ConvNet(object):
       pool1_param = self.params['pool1_param']
 
       scores = None
-      Y_1, cache_1 = conv_relu_pool_forward(X, W1, b1, conv1_param, pool1_param)
+      # Y_1, cache_1 = conv_relu_pool_forward(X, W1, b1, conv1_param, pool1_param)  # TODO
+      Y_1, cache_1 = sandwich_bn_forward(X, W1, b1, self.params['gamma1'], \
+                                         self.params['beta1'], conv1_param, pool1_param)
       Y_2, cache_2 = affine_relu_forward(Y_1, W2, b2)
       Y_3, cache_3 = affine_forward(Y_2, W3, b3)
       scores = Y_3
@@ -149,8 +152,8 @@ class ConvNet(object):
       loss += 0.5 * self.reg * (np.sum(W1 * W1) + np.sum(W2 * W2) + np.sum(W3 * W3))
 
       dx3, dW3, db3 = affine_backward(dy, cache_3)
-      dx2, dW2, db2 = affine_relu_backward(dx3, cache_2)   # TODO
-      dx1, dW1, db1 = conv_relu_pool_backward(dx2, cache_1)
+      dx2, dW2, db2 = affine_relu_backward(dx3, cache_2)
+      dx1, dW1, db1 = conv_relu_pool_backward(dx2, cache_1)   # TODO
 
       dW3, dW2, dW1 = (dW3 + self.reg * W3), (dW2 + self.reg * W2), (dW1 + self.reg * W1)
 

@@ -46,6 +46,7 @@ def affine_bn_relu_forward(x, w, b, gamma, beta, bn_params):
 
     return relu_out, cache
 
+
 def affine_bn_relu_backward(dout, cache):
   """ backpropagetion of affine <- bn <- relu """
 
@@ -118,3 +119,23 @@ def conv_relu_pool_backward(dout, cache):
   dx, dw, db = conv_backward_fast(da, conv_cache)
 
   return dx, dw, db
+
+
+def sandwich_bn_forward(x, w, b, gamma, beta, bn_param, conv_param, pool_param):
+    '''
+    Convenience layer that performs a convolution, batchnorm, a ReLU, and a pool.
+
+    Input/Output like conv_relu_pool_forward
+    '''
+
+    a, conv_cache = conv_forward_fast(x, w, b, conv_param)
+    bn_out, bn_cache = spatial_batchnorm_forward(a, gamma, beta, bn_param)
+    s, relu_cache = relu_forward(bn_out)
+    out, pool_cache = max_pool_forward_fast(s, pool_param)
+    cache = (conv_cache, bn_cache, relu_cache, pool_cache)
+
+    return out, cache
+
+
+def sandwich_bn_backward():
+    ''' Backward pass for the sandwich_bn convenience layer '''
