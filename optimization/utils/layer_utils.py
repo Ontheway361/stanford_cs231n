@@ -121,7 +121,7 @@ def conv_relu_pool_backward(dout, cache):
   return dx, dw, db
 
 
-def sandwich_bn_forward(x, w, b, gamma, beta, bn_param, conv_param, pool_param):
+def conv_bn_relu_pool_forward(x, w, b, gamma, beta, bn_param, conv_param, pool_param):
     '''
     Convenience layer that performs a convolution, batchnorm, a ReLU, and a pool.
 
@@ -137,5 +137,13 @@ def sandwich_bn_forward(x, w, b, gamma, beta, bn_param, conv_param, pool_param):
     return out, cache
 
 
-def sandwich_bn_backward():
+def conv_bn_relu_pool_backward(dout, cache):
     ''' Backward pass for the sandwich_bn convenience layer '''
+
+    conv_cache, bn_cache, relu_cache, pool_cache = cache
+    ds = max_pool_backward_fast(dout, pool_cache)
+    da = relu_backward(ds, relu_cache)
+    da_bn, dgamma, dbeta = spatial_batchnorm_backward(da, bn_cache)
+    dx, dw, db = conv_backward_fast(da_bn, conv_cache)
+
+    return dx, dw, db, dgamma, dbeta

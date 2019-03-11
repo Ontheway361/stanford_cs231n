@@ -83,7 +83,7 @@ if __name__ == '__main__':
         'hidden_dims'   : [1024, 100, 10],  # TODO
         'num_classes'   : 10,
         'dropout'       : 0.1,
-        'use_batchnorm' : False,
+        'use_batchnorm' : True,
         'weights_scale' : 2.5e-2,   #   5e-2
         'reg'           : 1e-2,
         'dtype'         : np.float64,
@@ -92,27 +92,41 @@ if __name__ == '__main__':
 
     cnn_config = {
         'input_dim'     : (3, 32, 32),
+        'num_layers'    : 3,
 
-        'sandwich1'    : {
-            'num_filters' : 32,
-            'filter_size' : 3,
-            'padding'     : 'same',
-            'stride'      : 1,
-            'pool_height' : 2,
-            'pool_width'  : 2,
-            'pool_stride' : 2
-        },
+        'conv_layers'   : {
+
+            'sandwich1'    : {
+                'num_filters' : 32,
+                'filter_size' : 7,
+                'padding'     : 'same',
+                'stride'      : 1,
+                'pool_height' : 2,
+                'pool_width'  : 2,
+                'pool_stride' : 2
+            },
+
+            'sandwich2'    : {
+                'num_filters' : 32,
+                'filter_size' : 3,
+                'padding'     : 'same',
+                'stride'      : 1,
+                'pool_height' : 2,
+                'pool_width'  : 2,
+                'pool_stride' : 2
+            }
+        }
 
         'hidden_dim'    : 500,
         'num_classes'   : 10,
-        'use_batchnorm' : True
+        'use_batchnorm' : False,
         'weight_scale'  : 2.5e-3,  # 2.5e-3
         'reg'           : 5e-3,
         'dtype'         : np.float32
     }
 
     solver_config = {
-        'num_train'     : 20000,
+        'num_train'     : 1000,
         'update_rule'   : 'adam',
         'learning_rate' : 5e-4,    # TODO 5e-4
         'lr_decay'      : 0.95,

@@ -230,7 +230,6 @@ class FullyConnectedNet(object):
             if self.use_batchnorm:
                 gammai = 'gamma' + str(i)
                 betai = 'beta' + str(i)
-
                 input_x, affine_bn_relu_cache[i] = affine_bn_relu_forward(input_x, self.params[Wi], self.params[bi], self.params[gammai], \
                                                                           self.params[betai], self.bn_params[i-1])
             else:
