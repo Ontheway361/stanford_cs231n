@@ -36,25 +36,27 @@ class ConvNet(object):
       - dtype: numpy datatype to use for computation.
       """
 
-      print('set parameters for ConvNets ... ')
+      print('set parameters for convnets ... ')
 
       if not cnn_config: print('cnn_config is None, nets adopts default parameters ...')
 
       # set the default parameters for sandwich
 
-      default_sandwich = {
-          'num_filters' : 32,
-          'filter_size' : 7,
-          'padding'     : 'same',
-          'stride'      : 1,
-          'pool_height' : 2,
-          'pool_width'  : 2,
-          'pool_stride' : 2,
+      conv_layers = {
+          'sandwich1' : {
+              'num_filters' : 32,
+              'filter_size' : 7,
+              'padding'     : 'same',
+              'stride'      : 1,
+              'pool_height' : 2,
+              'pool_width'  : 2,
+              'pool_stride' : 2
+          }
       }
 
       self.input_dim     = cnn_config.pop('input_dim', 3 * 32 * 32)
       self.num_layers    = cnn_config.pop('num_layers', 3)
-      self.sandwich1     = cnn_config.pop('sandwich1', default_sandwich)
+      self.conv_layers   = cnn_config.pop('conv_layers', conv_layers)
       self.hidden_dim    = cnn_config.pop('hidden_dim', 100)
       self.num_classes   = cnn_config.pop('num_classes', 10)
       self.use_batchnorm = cnn_config.pop('use_batchnorm', False)
@@ -67,27 +69,27 @@ class ConvNet(object):
           extra = ', '.join('"%s"' % k for k in cnn_config.keys())
           raise ValueError('Unrecognized arguments in cnn_config :  %s' % extra)
 
-      # fisrt sandwich
-      if self.sandwich1['padding'] is 'same':
-          pad = (self.sandwich1['filter_size'] - 1) // 2
-      else:
-          pad = self.sandwich1['padding']
-      conv1_param = {'stride': self.sandwich1['stride'], 'pad': pad}
-      pool1_param = {'pool_height' : self.sandwich1['pool_height'], \
-                    'pool_width'  : self.sandwich1['pool_width'], \
-                    'pool_stride' : self.sandwich1['pool_stride']}
+      for index in range(len(conv_layers)):
+          sandwich_i = 'sandwich' + str(index + 1)
+          if self.conv_layers[sandwich_i]['padding'] is 'same':
+              self.conv_layers[sandwich_i]['padding'] = self.conv_layers[sandwich_i]['filter_size'] // 2
 
-      C, H, W = self.input_dim
+      input_dim = self.input_dim
 
-      # params for conv_pool layer
-      self.params['W1'] = self.weight_scale * np.random.randn(self.sandwich1['num_filters'], \
-                          C, self.sandwich1['filter_size'], self.sandwich1['filter_size'])
-      self.params['b1'] = np.zeros((self.sandwich1['num_filters'],))
-      self.params['conv1_param'] = conv1_param
-      self.params['pool1_param'] = pool1_param
+      for index in range(len(conv_layers)):
 
-      H_conv_o = 1 + (H + 2 * conv1_param['pad'] - self.sandwich1['filter_size']) // conv1_param['stride']
-      W_conv_o = 1 + (W + 2 * conv1_param['pad'] - self.sandwich1['filter_size']) // conv1_param['stride']
+          C, H, W = input_dim
+          filter, bias = 'W' + str(index + 1), 'b' + str(index + 1)
+          sandwich_i = 'sandwich' + str(index + 1)
+
+          self.params[filter] = self.weight_scale * np.random.randn(self.conv_layers[sandwich_i]['num_filters'], \
+                                         C, self.conv_layers[sandwich_i]['filter_size'], self.conv_layers[sandwich_i]['filter_size'])
+          self.params[bias] = np.zeros((self.conv_layers[sandwich_i]['num_filters'],))
+
+          const = 2 * self.conv_layers[sandwich_i]['padding'] - self.conv_layers[sandwich_i]['filter_size']
+          H_conv_o = (H + const) // self.conv_layers[sandwich_i]['stride'] + 1
+          W_conv_o = (W + const) // self.conv_layers[sandwich_i]['stride'] + 1
+          
       H_pool_o = 1 + (H_conv_o - pool1_param['pool_height']) // pool1_param['pool_stride']
       W_pool_o = 1 + (W_conv_o - pool1_param['pool_width']) // pool1_param['pool_stride']
 

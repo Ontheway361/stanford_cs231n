@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
         'conv_layers'   : {
 
-            'sandwich1'    : {
+            'sandwich1' : {
                 'num_filters' : 32,
                 'filter_size' : 7,
                 'padding'     : 'same',
@@ -106,7 +106,18 @@ if __name__ == '__main__':
                 'pool_stride' : 2
             },
 
-            'sandwich2'    : {
+            # 1 x 1 conv
+            'sandwich2' : {
+                'num_filters' : 32,
+                'filter_size' : 1,
+                'padding'     : 0,
+                'stride'      : 1
+                # 'pool_height' : 2,
+                # 'pool_width'  : 2,
+                # 'pool_stride' : 2
+            },
+
+            'sandwich3'  : {
                 'num_filters' : 32,
                 'filter_size' : 3,
                 'padding'     : 'same',
