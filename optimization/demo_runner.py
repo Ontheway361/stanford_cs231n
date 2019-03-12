@@ -92,12 +92,11 @@ if __name__ == '__main__':
 
     cnn_config = {
         'input_dim'     : (3, 32, 32),
-        'num_layers'    : 3,
 
         'conv_layers'   : {
 
             'sandwich1' : {
-                'num_filters' : 32,
+                'num_filters' : 64,
                 'filter_size' : 7,
                 'padding'     : 'same',
                 'stride'      : 1,
@@ -108,7 +107,7 @@ if __name__ == '__main__':
 
             # 1 x 1 conv
             'sandwich2' : {
-                'num_filters' : 32,
+                'num_filters' : 1,
                 'filter_size' : 1,
                 'padding'     : 0,
                 'stride'      : 1
@@ -128,7 +127,7 @@ if __name__ == '__main__':
             }
         }
 
-        'hidden_dim'    : 500,
+        'fcn_layers'    : [500],
         'num_classes'   : 10,
         'use_batchnorm' : False,
         'weight_scale'  : 2.5e-3,  # 2.5e-3
