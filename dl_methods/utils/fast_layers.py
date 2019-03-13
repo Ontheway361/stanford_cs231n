@@ -24,7 +24,7 @@ def conv_forward_im2col(x, w, b, conv_param):
 
     N, C, H, W = x.shape
     num_filters, _, filter_height, filter_width = w.shape
-    stride, pad = conv_param['stride'], conv_param['pading']
+    stride, pad = conv_param['stride'], conv_param['padding']
 
     # Check dimensions
     assert (W + 2 * pad - filter_width) % stride == 0, 'width does not work'
@@ -51,7 +51,7 @@ def conv_forward_fast(x, w, b, conv_param):
 
     N, C, H, W = x.shape
     F, _, HH, WW = w.shape
-    stride, pad = conv_param['stride'], conv_param['pading']
+    stride, pad = conv_param['stride'], conv_param['padding']
 
     # Check dimensions
     assert (W + 2 * pad - WW) % stride == 0, 'width does not work'
@@ -96,7 +96,7 @@ def conv_backward_fast(dout, cache):
     ''' '''
 
     x, w, b, conv_param, x_cols = cache
-    stride, pad = conv_param['stride'], conv_param['pading']
+    stride, pad = conv_param['stride'], conv_param['padding']
 
     N, C, H, W = x.shape
     F, _, HH, WW = w.shape
@@ -118,7 +118,7 @@ def conv_backward_im2col(dout, cache):
     ''' A fast implementation of the backward pass for a convolutional layer based on im2col and col2im. '''
 
     x, w, b, conv_param, x_cols = cache
-    stride, pad = conv_param['stride'], conv_param['pading']
+    stride, pad = conv_param['stride'], conv_param['padding']
 
     db = np.sum(dout, axis=(0, 2, 3))
 

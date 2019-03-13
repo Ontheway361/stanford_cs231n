@@ -34,6 +34,7 @@ def affine_forward(x, w, b):
     cache = (x, w, b)
     return out, cache
 
+
 def affine_backward(dout, cache):
     """
     Computes the backward pass for an affine layer.
@@ -65,6 +66,7 @@ def affine_backward(dout, cache):
 
     return dx, dw, db
 
+
 def relu_forward(x):
     """
     Computes the forward pass for a layer of rectified linear units (ReLUs).
@@ -84,6 +86,7 @@ def relu_forward(x):
 
     return out, cache
 
+
 def relu_backward(dout, cache):
     """
     Computes the backward pass for a layer of rectified linear units (ReLUs).
@@ -99,6 +102,7 @@ def relu_backward(dout, cache):
     dx = np.array(dout, copy = True)
     dx[x <= 0] = 0
     return dx
+
 
 def batchnorm_forward(x, gamma, beta, bn_param):
 
@@ -176,6 +180,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
 
     return out, cache
 
+
 def batchnorm_backward(dout, cache):
     """
     -------------------------------------------------------------------------------
@@ -209,6 +214,7 @@ def batchnorm_backward(dout, cache):
     dx = 1/np.sqrt(sample_var+eps)*dx_normalized + dsample_var*2.0/N*(x-sample_mean) + 1.0/N*dsample_mean
 
     return dx, dgamma, dbeta
+
 
 def dropout_forward(x, dropout_param):
     """
@@ -250,6 +256,7 @@ def dropout_forward(x, dropout_param):
 
     return out, cache
 
+
 def dropout_backward(dout, cache):
     """
     Perform the backward pass for (inverted) dropout.
@@ -269,6 +276,7 @@ def dropout_backward(dout, cache):
     else: raise ValueError('Invalid backward dropout mode %s' % mode)
 
     return dx
+
 
 def conv(X, w, b, conv_param):
     '''
@@ -299,6 +307,7 @@ def conv(X, w, b, conv_param):
             Y[i, j] = np.sum(conv_map) + b
 
     return Y
+
 
 def conv_forward_naive(x, w, b, conv_param):
     """
@@ -342,6 +351,7 @@ def conv_forward_naive(x, w, b, conv_param):
 
     cache = (x, w, b, conv_param)
     return out, cache
+
 
 def conv_backward_naive(dout, cache):
     """
@@ -388,6 +398,7 @@ def conv_backward_naive(dout, cache):
     dx = dx_pad[:, :, pad: H + pad, pad: W + pad]
     return dx, dw, db
 
+
 def max_pool_forward_naive(x, pool_param):
     """
     A naive implementation of the forward pass for a max pooling layer.
@@ -417,6 +428,7 @@ def max_pool_forward_naive(x, pool_param):
                     out[n, c, h, w] = np.max(x[n, c, (h * stride):(h * stride + pool_height), (w * stride):(w * stride + pool_width)])
     cache = (x, pool_param)
     return out, cache
+
 
 def max_pool_backward_naive(dout, cache):
     """
@@ -448,6 +460,7 @@ def max_pool_backward_naive(dout, cache):
                     dx[n, c, h*stride+i, w*stride+j] += dout[n,c,h,w]
     return dx
 
+
 def spatial_batchnorm_forward(x, gamma, beta, bn_param):
     """
     Computes the forward pass for spatial batch normalization.
@@ -478,6 +491,7 @@ def spatial_batchnorm_forward(x, gamma, beta, bn_param):
 
     return out, cache
 
+
 def spatial_batchnorm_backward(dout, cache):
     """
     Computes the backward pass for spatial batch normalization.
@@ -498,6 +512,7 @@ def spatial_batchnorm_backward(dout, cache):
     dx = dx_temp.reshape(N,W,H,C).transpose(0,3,2,1)
 
     return dx, dgamma, dbeta
+
 
 def svm_loss(x, y):
     """
@@ -523,6 +538,7 @@ def svm_loss(x, y):
     dx[np.arange(N), y] -= num_pos
     dx /= N
     return loss, dx
+
 
 def softmax_loss(x, y):
     """

@@ -10,6 +10,7 @@ import numpy as np
 from utils import optim
 from IPython import embed
 from utils.data_utils import load_CIFAR10
+from utils.data_argmentation import DataArgmentation
 
 class Solver(object):
 
@@ -87,6 +88,14 @@ class Solver(object):
         for p in self.model.params:
             d = {'learning_rate': self.learning_rate}
             self.optim_configs[p] = d
+
+
+    def _data_argmentation(self):
+        '''
+        Data argmentation for generating a general X_train
+        '''
+
+        pass
 
 
     def batch_trainer(self):
@@ -193,12 +202,22 @@ class Solver(object):
         self.model.params = self.best_params
 
 
-    def predict(self):
+    def predict(self, batch_size = 1000):
         ''' predict the X_test with best_model '''
-        del self.data['X_train'], self.data['y_train']
-        pred_val  = np.argmax(self.model.loss(self.data['X_val']), axis=1)
-        pred_test = np.argmax(self.model.loss(self.data['X_test'][:1000]), axis=1)
-        val_acc   = (pred_val == self.data['y_val']).mean()
-        test_acc  = (pred_test == self.data['y_test'][:1000]).mean()
 
-        print('%s\nval_acc : %6.4f,\ttest_acc : %6.4f\n%s' % ('-'*75, val_acc, test_acc, '-'*75))
+        del self.data['X_train'], self.data['y_train'], self.data['X_val'], self.data['y_val']
+
+        num_batches = np.ceil(self.data['X_test'].shape[0] / batch_size).astype(int)
+        acc_list = [0] * num_batches
+
+        for index in range(num_batches):
+
+            pred = np.argmax(self.model.loss(self.data['X_test'][:batch_size]), axis=1)
+            acc  = (pred == self.data['y_test'][:batch_size]).mean()
+            acc_list[index] = acc
+
+            self.data['X_test'] = self.data['X_test'][batch_size:]
+            self.data['y_test'] = self.data['y_test'][batch_size:]
+
+        test_acc = np.mean(acc_list)
+        print('%s\ntest_acc : %6.4f\n%s' % ('-'*36, test_acc, '-'*36))

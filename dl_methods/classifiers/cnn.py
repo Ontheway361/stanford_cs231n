@@ -75,7 +75,9 @@ class ConvNet(object):
     def _init_params(self):
         ''' init the parameters for conv-layers '''
 
-        for index in range(len(conv_layers)):
+        print('cnn : %d, fcn : %d, num_layers : %d' % (len(self.conv_layers), len(self.fcn_layers), self.num_layers))
+
+        for index in range(len(self.conv_layers)):
 
             sandwich_i = 'sandwich' + str(index + 1)
             if self.conv_layers[sandwich_i]['padding'] is 'same':
@@ -85,7 +87,7 @@ class ConvNet(object):
 
         input_dim = self.input_dim
 
-        for index in range(len(conv_layers)):
+        for index in range(len(self.conv_layers)):
 
             C, H, W = input_dim
             filter_i, bias_i = 'W' + str(index + 1), 'b' + str(index + 1)
@@ -108,26 +110,26 @@ class ConvNet(object):
             H_pool_o = 1 + (H_conv_o - self.conv_layers[sandwich_i]['pool_height']) // self.conv_layers[sandwich_i]['pool_stride']
             W_pool_o = 1 + (W_conv_o -self.conv_layers[sandwich_i]['pool_width']) // self.conv_layers[sandwich_i]['pool_stride']
 
-            input_dim = (self.conv_layers[sandwich_i]['num_filters'], H_conv_o, W_conv_o)
+            input_dim = (self.conv_layers[sandwich_i]['num_filters'], H_pool_o, W_pool_o)
 
 
         # init fcn_params
 
         num_input = np.prod(input_dim)
 
-        for index in range(len(conv_layers), self.num_layers - 1):
+        for index in range(len(self.conv_layers), self.num_layers - 1):
 
             weight_i, bias_i = 'W' + str(index + 1), 'b' + str(index + 1)
-            self.params[weight_i] = self.weight_scale * np.random.randn(num_input, self.fcn_layers[index-len(conv_layers)])
-            self.params[bias_i]   = np.zeros((self.fcn_layers[index-len(conv_layers)],))
+            self.params[weight_i] = self.weight_scale * np.random.randn(num_input, self.fcn_layers[index-len(self.conv_layers)])
+            self.params[bias_i]   = np.zeros((self.fcn_layers[index-len(self.conv_layers)],))
 
             if self.use_batchnorm:
 
                 gamma_i, beta_i = 'gamma' + str(index + 1), 'beta' + str(index + 1)
-                self.params[gamma_i] = np.ones(self.fcn_layers[index-len(conv_layers)])
-                self.params[beta_i] = np.zeros(self.fcn_layers[index-len(conv_layers)])
+                self.params[gamma_i] = np.ones(self.fcn_layers[index-len(self.conv_layers)])
+                self.params[beta_i] = np.zeros(self.fcn_layers[index-len(self.conv_layers)])
 
-            num_input = self.fcn_layers[index-len(conv_layers)]
+            num_input = self.fcn_layers[index-len(self.conv_layers)]
 
 
         # int last layer
@@ -162,6 +164,8 @@ class ConvNet(object):
             else:
                 output_list[index], cache_list[index] = conv_relu_pool_forward(output_list[index - 1], self.params[weight_i], self.params[bias_i], sandwich_param)
 
+            # print('layer : ', index, '\tout_shape : ', output_list[index].shape)
+
         # fcn
         for index in range(len(self.conv_layers) + 1, self.num_layers):
 
@@ -174,10 +178,13 @@ class ConvNet(object):
             else:
                 output_list[index], cache_list[index] = affine_relu_forward(output_list[index - 1], self.params[weight_i], self.params[bias_i])
 
+            # print('layer : ', index, '\tout_shape : ', output_list[index].shape)
+
         # last layer
         weight_i, bias_i = 'W' + str(self.num_layers), 'b' + str(self.num_layers)
         output_list[self.num_layers], cache_list[self.num_layers] = affine_forward(output_list[-2], self.params[weight_i], self.params[bias_i])
 
+        # print('layer : ', self.num_layers, '\tout_shape : ', output_list[self.num_layers].shape)
 
     def _backward(self, cache_list = None, grads = None, dy = None):
         ''' backward process of architecture '''
@@ -211,14 +218,9 @@ class ConvNet(object):
             else:
                 dx_list[index-1], grads[weight_i], grads[bias_i] = conv_relu_pool_backward(dx_list[index], cache_list[index])
 
-
-        dW3, dW2, dW1 = (dW3 + self.reg * W3), (dW2 + self.reg * W2), (dW1 + self.reg * W1)
-
-        grads['W1'], grads['b1'] = dW1, db1
-        grads['W2'], grads['b2'] = dW2, db2
-        grads['W3'], grads['b3'] = dW3, db3
-
-
+        for index in range(self.num_layers, 0, -1):
+            weight_i = 'W' + str(index)
+            grads[weight_i] += self.reg * self.params[weight_i]
 
 
     def loss(self, X, y = None):
@@ -250,7 +252,7 @@ class ConvNet(object):
 
         for index in range(self.num_layers):
             weight = self.params['W' + str(index + 1)]
-            loss += 0.5 * self.reg * (np.sum(weight * weight)
+            loss += 0.5 * self.reg * (np.sum(weight * weight))
 
         self._backward(cache_list, grads, dy)
 
