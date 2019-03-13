@@ -117,8 +117,20 @@ class DataArgmentation(object):
             - -1 : rgb -> gray
         '''
 
+        N, H, W, C = self.X_data.shape
         color_data = np.zeros_like(self.X_data)
 
         if mode == 0:
+            for index in range(N):
+                color_data[index] = cv2.cvtColor(self.X_data[index], cv2.COLOR_BGR2HSV)   # TODO
+
         elif mode == 1:
+            for index in range(N):
+                color_data[index] = cv2.cvtColor(self.X_data[index], cv2.COLOR_BGR2HSV)
         else:
+            for index in range(N):
+                color_data[index] = cv2.cvtColor(self.X_data[index], cv2.COLOR_BGR2GRAY)
+
+        return color_data
+
+        
