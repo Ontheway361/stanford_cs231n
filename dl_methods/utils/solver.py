@@ -47,6 +47,7 @@ class Solver(object):
 
         self.model         = model
         self.data          = load_CIFAR10()
+        self.argmented     = solver_config.pop('argmented', [])
         self.num_train     = solver_config.pop('num_train', None)
         self.update_rule   = solver_config.pop('update_rule', 'adam')
         self.learning_rate = solver_config.pop('learning_rate', 1e-3)
@@ -58,6 +59,8 @@ class Solver(object):
         if len(solver_config) > 0:
             extra = ', '.join('"%s"' % k for k in solver_config.keys())
             raise ValueError('Unrecognized arguments in solver_config : %s' % extra)
+
+        self._data_argmentation()
 
         if not hasattr(optim, self.update_rule):
             raise ValueError('Invalid update_rule "%s"' % self.update_rule)
@@ -95,8 +98,13 @@ class Solver(object):
         Data argmentation for generating a general X_train
         '''
 
-        pass
+        print('data argmentation method list :', self.argmented)
 
+        argment_engine = DataArgmentation(self.data)
+
+        self.data = argment_engine.argumented(self.argmented)
+
+        # print('data argmentation is finished, num_train : %6d' % self.data['X_train'].shape[0])
 
     def batch_trainer(self):
         '''  forward & back_propagetion on single batch_instances '''
@@ -219,5 +227,6 @@ class Solver(object):
             self.data['X_test'] = self.data['X_test'][batch_size:]
             self.data['y_test'] = self.data['y_test'][batch_size:]
 
+        print(acc_list)
         test_acc = np.mean(acc_list)
         print('%s\ntest_acc : %6.4f\n%s' % ('-'*36, test_acc, '-'*36))

@@ -23,8 +23,8 @@ def load_CIFAR_batch(filename):
         datadict = pickle.load(f, encoding = 'bytes')
         X = datadict[b'data']
         Y = datadict[b'labels']
-        # X = X.reshape(10000, 3, 32, 32).transpose(0,2,3,1).astype("float")
-        X = X.reshape(10000, 3, 32, 32).astype('float')
+        X = X.reshape(10000, 3, 32, 32).transpose(0,2,3,1).astype("float") # N x H x W x C
+        # X = X.reshape(10000, 3, 32, 32).astype('float')  # N x C x H x W
         Y = np.array(Y)
         return X, Y
 
@@ -45,14 +45,10 @@ def load_CIFAR10(num_vaild = 1000):
     order_list = np.arange(X.shape[0]); np.random.shuffle(order_list)
 
     dataset, num_train = {}, X.shape[0]-num_vaild
-    sample_mean, sample_var  = np.mean(X, axis = 0), np.var(X, axis = 0)
-    X = (X - sample_mean) / np.sqrt(sample_var + 1e-4)
 
     dataset['X_train'], dataset['y_train'] = X[order_list[:num_train], :], Y[order_list[:num_train]]
     dataset['X_val'], dataset['y_val']     = X[order_list[num_train:], :], Y[order_list[num_train:]]
-
     dataset['X_test'], dataset['y_test']   = load_CIFAR_batch(os.path.join(file_path, 'test_batch'))
-    dataset['X_test'] = (dataset['X_test'] - sample_mean) / np.sqrt(sample_var + 1e-4)
 
     return dataset
 

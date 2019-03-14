@@ -115,6 +115,7 @@ class Architecture(object):
 
         solver_config = {
               'num_train'     : None,
+              'argmented'     : [],    # ['flip', 'color', 'noise', 'trans', 'crop']
               'update_rule'   : 'adam',
               'learning_rate' : 5e-4,    # TODO 5e-4
               'lr_decay'      : 0.95,
