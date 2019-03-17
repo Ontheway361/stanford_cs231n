@@ -1,24 +1,25 @@
-import urllib2, os, tempfile
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on 2019/03/17
+author: lujie
+"""
 
 import numpy as np
+import os, tempfile
+from urllib import request, error
 from scipy.misc import imread
-
-from cs231n.fast_layers import conv_forward_fast
-
-
-"""
-Utility functions used for viewing and processing images.
-"""
+from utils.fast_layers import conv_forward_fast
 
 
 def blur_image(X):
   """
   A very gentle image blurring operation, to be used as a regularizer for image
   generation.
-  
+
   Inputs:
   - X: Image data of shape (N, 3, H, W)
-  
+
   Returns:
   - X_blur: Blurred version of X, of shape (N, 3, H, W)
   """
@@ -34,10 +35,10 @@ def blur_image(X):
 def preprocess_image(img, mean_img, mean='image'):
   """
   Convert to float, transepose, and subtract mean pixel
-  
+
   Input:
   - img: (H, W, 3)
-  
+
   Returns:
   - (1, 3, H, 3)
   """
@@ -55,10 +56,10 @@ def preprocess_image(img, mean_img, mean='image'):
 def deprocess_image(img, mean_img, mean='image', renorm=False):
   """
   Add mean pixel, transpose, and convert to uint8
-  
+
   Input:
   - (1, 3, H, W) or (3, H, W)
-  
+
   Returns:
   - (H, W, 3)
   """
@@ -85,14 +86,15 @@ def image_from_url(url):
   We write the image to a temporary file then read it back. Kinda gross.
   """
   try:
-    f = urllib2.urlopen(url)
-    _, fname = tempfile.mkstemp()
-    with open(fname, 'wb') as ff:
-      ff.write(f.read())
-    img = imread(fname)
-    os.remove(fname)
-    return img
-  except urllib2.URLError as e:
-    print 'URL Error: ', e.reason, url
-  except urllib2.HTTPError as e:
-    print 'HTTP Error: ', e.code, url
+      f = request.urlopen(url)
+      _, fname = tempfile.mkstemp()
+      with open(fname, 'wb') as ff:
+          ff.write(f.read())
+      img = imread(fname)
+      os.remove(fname)
+      return img
+
+  except error.URLError as e:
+      print('URL Error: ', e.reason, url)
+  except error.HTTPError as e:
+      print('HTTP Error: ', e.code, url)
