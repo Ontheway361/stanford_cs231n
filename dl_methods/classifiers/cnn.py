@@ -186,6 +186,7 @@ class ConvNet(object):
 
         # print('layer : ', self.num_layers, '\tout_shape : ', output_list[self.num_layers].shape)
 
+
     def _backward(self, cache_list = None, grads = None, dy = None):
         ''' backward process of architecture '''
 

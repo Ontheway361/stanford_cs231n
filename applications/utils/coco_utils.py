@@ -61,14 +61,30 @@ def load_coco_data(max_train = None, pca_features = True):
     return data
 
 
+def sample_coco_minibatch(data, batch_size = 100, split = 'train'):
+    ''' get the minibatch coco dataset '''
+
+    split_size = data['%s_captions' % split].shape[0]
+    mask = np.random.choice(split_size, batch_size, )
+    captions = data['%s_captions' % split][mask]
+    image_idxs = data['%s_image_idxs' % split][mask]
+    image_features = data['%s_features' % split][image_idxs]
+    urls = data['%s_urls' % split][image_idxs]
+
+    minibatch = (captions, image_features, urls)
+
+    return minibatch
+
+
 def decode_captions(captions, idx_to_word):
-    ''' '''
+    ''' decode the caption '''
 
     singleton = False
     if captions.ndim == 1:
         singleton = True
         captions = captions[None]
     decoded = []
+
     N, T = captions.shape
 
     for i in range(N):
@@ -81,19 +97,6 @@ def decode_captions(captions, idx_to_word):
                 break
         decoded.append(' '.join(words))
 
-    if singleton:
-      decoded = decoded[0]
+    if singleton: decoded = decoded[0]
+
     return decoded
-
-
-def sample_coco_minibatch(data, batch_size = 100, split = 'train'):
-    ''' '''
-
-    split_size = data['%s_captions' % split].shape[0]
-    mask = np.random.choice(split_size, batch_size)
-    captions = data['%s_captions' % split][mask]
-    image_idxs = data['%s_image_idxs' % split][mask]
-    image_features = data['%s_features' % split][image_idxs]
-    urls = data['%s_urls' % split][image_idxs]
-
-    return captions, image_features, urls

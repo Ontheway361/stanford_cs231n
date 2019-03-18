@@ -5,7 +5,7 @@ Created on 2019/03/17
 author: lujie
 """
 
-
+from IPython import embed
 import numpy as np
 
 
@@ -165,6 +165,7 @@ def word_embedding_forward(x, W):
     - out: Array of shape (N, T, D) giving word vectors for all input words.
     - cache: Values needed for the backward pass
     """
+
     out, cache = None, None
     V, D = W.shape
     N, T = x.shape
@@ -396,7 +397,7 @@ def temporal_affine_forward(x, w, b):
     N, T, D = x.shape
     M = b.shape[0]
     out = x.reshape(N * T, D).dot(w).reshape(N, T, M) + b
-    cache = x, w, b, out
+    cache = (x, w, b, out)
     return out, cache
 
 
@@ -431,8 +432,7 @@ def temporal_softmax_loss(x, y, mask, verbose = False):
     timeseries of length T, over a minibatch of size N. The input x gives scores
     for all vocabulary elements at all timesteps, and y gives the indices of the
     ground-truth element at each timestep. We use a cross-entropy loss at each
-    timestep, summing the loss over all timesteps and averaging across the
-    minibatch.
+    timestep, summing the loss over all timesteps and averaging across the minibatch.
 
     As an additional complication, we may want to ignore the model output at some
     timesteps, since sequences of different length may have been combined into a
@@ -460,6 +460,7 @@ def temporal_softmax_loss(x, y, mask, verbose = False):
     probs = np.exp(x_flat - np.max(x_flat, axis=1, keepdims=True))
     probs /= np.sum(probs, axis=1, keepdims=True)
     loss = -np.sum(mask_flat * np.log(probs[np.arange(N * T), y_flat])) / N
+
     dx_flat = probs.copy()
     dx_flat[np.arange(N * T), y_flat] -= 1
     dx_flat /= N

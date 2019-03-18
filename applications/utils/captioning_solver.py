@@ -6,8 +6,8 @@ author: lujie
 """
 
 import numpy as np
-
 from utils import optim
+from IPython import embed
 from utils.coco_utils import sample_coco_minibatch
 
 
@@ -79,38 +79,34 @@ class CaptioningSolver(object):
           raise ValueError('Invalid update_rule "%s"' % self.update_rule)
         self.update_rule = getattr(optim, self.update_rule)
 
-        self._reset()
+        self._init_history_details()
 
 
-    def _reset(self):
-      """
-      Set up some book-keeping variables for optimization. Don't call this
-      manually.
-      """
-      # Set up some variables for book-keeping
-      self.epoch = 0
-      self.best_val_acc = 0
-      self.best_params = {}
-      self.loss_history = []
-      self.train_acc_history = []
-      self.val_acc_history = []
+    def _init_history_details(self):
+        """
+        Set up some book-keeping variables for optimization. Don't call this
+        manually.
+        """
+        # Set up some variables for book-keeping
+        self.epoch = 0
+        self.best_val_acc = 0
+        self.best_params = {}
+        self.loss_history = []
+        self.train_acc_history = []
+        self.val_acc_history = []
 
-      # Make a deep copy of the optim_config for each parameter
-      self.optim_configs = {}
-      for p in self.model.params:
-        d = {k: v for k, v in self.optim_config.items()}
-        self.optim_configs[p] = d
+        # Make a deep copy of the optim_config for each parameter
+        self.optim_configs = {}
+        for p in self.model.params:
+            d = {k: v for k, v in self.optim_config.items()}
+            self.optim_configs[p] = d
 
 
     def _step(self):
-      """
-      Make a single gradient update. This is called by train() and should not
-      be called manually.
-      """
+      """ Make a single gradient update """
+
       # Make a minibatch of training data
-      minibatch = sample_coco_minibatch(self.data,
-                    batch_size=self.batch_size,
-                    split='train')
+      minibatch = sample_coco_minibatch(self.data, batch_size = self.batch_size, split = 'train')
       captions, features, urls = minibatch
 
       # Compute loss and gradient
@@ -119,82 +115,81 @@ class CaptioningSolver(object):
 
       # Perform a parameter update
       for p, w in self.model.params.items():
-        dw = grads[p]
-        config = self.optim_configs[p]
-        next_w, next_config = self.update_rule(w, dw, config)
-        self.model.params[p] = next_w
-        self.optim_configs[p] = next_config
+          dw = grads[p]
+          config = self.optim_configs[p]
+          next_w, next_config = self.update_rule(w, dw, config)
+          self.model.params[p] = next_w
+          self.optim_configs[p] = next_config
 
-
-    # TODO: This does nothing right now; maybe implement BLEU?
     def check_accuracy(self, X, y, num_samples=None, batch_size=100):
-      """
-      Check accuracy of the model on the provided data.
+        """
+        Check accuracy of the model on the provided data.
 
-      Inputs:
-      - X: Array of data, of shape (N, d_1, ..., d_k)
-      - y: Array of labels, of shape (N,)
-      - num_samples: If not None, subsample the data and only test the model
-        on num_samples datapoints.
-      - batch_size: Split X and y into batches of this size to avoid using too
-        much memory.
+        Inputs:
+        - X: Array of data, of shape (N, d_1, ..., d_k)
+        - y: Array of labels, of shape (N,)
+        - num_samples: If not None, subsample the data and only test the model
+          on num_samples datapoints.
+        - batch_size: Split X and y into batches of this size to avoid using too
+          much memory.
 
-      Returns:
-      - acc: Scalar giving the fraction of instances that were correctly
-        classified by the model.
-      """
-      return 0.0
+        Returns:
+        - acc: Scalar giving the fraction of instances that were correctly
+          classified by the model.
+        """
+        return 0.0
 
-      # Maybe subsample the data
-      N = X.shape[0]
-      if num_samples is not None and N > num_samples:
-        mask = np.random.choice(N, num_samples)
-        N = num_samples
-        X = X[mask]
-        y = y[mask]
+        # Maybe subsample the data
+        N = X.shape[0]
+        if num_samples is not None and N > num_samples:
+            mask = np.random.choice(N, num_samples)
+            N = num_samples
+            X = X[mask]
+            y = y[mask]
 
-      # Compute predictions in batches
-      num_batches = N / batch_size
-      if N % batch_size != 0:
-        num_batches += 1
-      y_pred = []
-      for i in range(num_batches):
-        start = i * batch_size
-        end = (i + 1) * batch_size
-        scores = self.model.loss(X[start:end])
-        y_pred.append(np.argmax(scores, axis=1))
-      y_pred = np.hstack(y_pred)
-      acc = np.mean(y_pred == y)
+        # Compute predictions in batches
+        num_batches = N / batch_size
 
-      return acc
+        if N % batch_size != 0:
+            num_batches += 1
+        y_pred = []
+
+        for i in range(num_batches):
+            start = i * batch_size
+            end = (i + 1) * batch_size
+            scores = self.model.loss(X[start:end])
+            y_pred.append(np.argmax(scores, axis=1))
+        y_pred = np.hstack(y_pred)
+        acc = np.mean(y_pred == y)
+
+        return acc
 
 
     def train(self):
-      """
-      Run optimization to train the model.
-      """
-      num_train = self.data['train_captions'].shape[0]
-      iterations_per_epoch = max(num_train // self.batch_size, 1)
-      num_iterations = self.num_epochs * iterations_per_epoch
+        """
+        Run optimization to train the model.
+        """
+        num_train = self.data['train_captions'].shape[0]
+        iterations_per_epoch = max(num_train // self.batch_size, 1)
+        num_iterations = self.num_epochs * iterations_per_epoch
 
-      for t in range(num_iterations):
-        self._step()
+        for t in range(num_iterations):
 
-        # Maybe print training loss
-        if self.verbose and t % self.print_every == 0:
-          print('(Iteration %d / %d) loss: %f' % (t + 1, num_iterations, self.loss_history[-1]))
+            self._step()
 
-        # At the end of every epoch, increment the epoch counter and decay the
-        # learning rate.
-        epoch_end = (t + 1) % iterations_per_epoch == 0
-        if epoch_end:
-          self.epoch += 1
-          for k in self.optim_configs:
-            self.optim_configs[k]['learning_rate'] *= self.lr_decay
+            if self.verbose and t % self.print_every == 0:
+              print('(Iteration %d / %d) loss: %f' % (t + 1, num_iterations, self.loss_history[-1]))
 
-        # Check train and val accuracy on the first iteration, the last
-        # iteration, and at the end of each epoch.
-        # TODO: Implement some logic to check Bleu on validation set periodically
+            # At the end of every epoch, increment the epoch counter and decay the learning rate.
+            epoch_end = (t + 1) % iterations_per_epoch == 0
+            if epoch_end:
+                self.epoch += 1
+                for k in self.optim_configs:
+                    self.optim_configs[k]['learning_rate'] *= self.lr_decay
 
-      # At the end of training swap the best params into the model
-      # self.model.params = self.best_params
+          # Check train and val accuracy on the first iteration, the last
+          # iteration, and at the end of each epoch.
+          # TODO: Implement some logic to check Bleu on validation set periodically
+
+        # At the end of training swap the best params into the model
+        # self.model.params = self.best_params

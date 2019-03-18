@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 
 from IPython import embed
 
-from utils.gradient_check import eval_numerical_gradient, eval_numerical_gradient_array
 from utils.rnn_layers import *
 from utils.captioning_solver import CaptioningSolver
 from classifiers.rnn import CaptioningRNN
@@ -29,19 +28,6 @@ def rel_error(x, y):
 
 if __name__ == '__main__':
 
-# ------------------------------------
-# train_captions
-# train_image_idxs
-# val_captions
-# val_image_idxs
-# train_features  #
-# val_features
-# idx_to_word
-# word_to_idx     #
-# train_urls
-# val_urls
-# ------------------------------------
-
 
     data = load_coco_data(max_train=50)
 
@@ -49,8 +35,8 @@ if __name__ == '__main__':
               cell_type='rnn',
               word_to_idx = data['word_to_idx'],
               input_dim = data['train_features'].shape[1],
-              hidden_dim=512,
-              wordvec_dim=256,
+              hidden_dim = 512,
+              wordvec_dim = 256,
             )
 
     small_rnn_solver = CaptioningSolver(small_rnn_model, data,
@@ -72,3 +58,17 @@ if __name__ == '__main__':
     plt.ylabel('Loss')
     plt.title('Training loss history')
     plt.show()
+
+    for split in ['train', 'val']:
+        minibatch = sample_coco_minibatch(data, batch_size = 2, split = split)
+        gt_captions, features, urls = minibatch
+        gt_captions = decode_captions(gt_captions, data['idx_to_word'])
+
+        sample_captions = small_rnn_model.reference(features)
+        sample_captions = decode_captions(sample_captions, data['idx_to_word'])
+
+        for gt_caption, sample_caption, url in zip(gt_captions, sample_captions, urls):
+             plt.imshow(image_from_url(url))
+             plt.title('%s\n%s\nGT:%s' % (split, sample_caption, gt_caption))
+             plt.axis('off')
+             plt.show()
