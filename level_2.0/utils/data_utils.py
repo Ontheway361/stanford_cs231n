@@ -28,6 +28,7 @@ def load_CIFAR_batch(filename):
         Y = np.array(Y)
         return X, Y
 
+
 def load_CIFAR10(num_vaild = 1000):
     ''' load all of cifar '''
 
@@ -52,7 +53,8 @@ def load_CIFAR10(num_vaild = 1000):
 
     return dataset
 
-def load_tiny_imagenet(path, dtype = np.float32):
+
+def load_tiny_imagenet(path, dtype = np.float32, subtract_mean = True):
     """
     Load TinyImageNet. Each of TinyImageNet-100-A, TinyImageNet-100-B, and
     TinyImageNet-200 have the same directory structure, so this can be used
@@ -72,6 +74,7 @@ def load_tiny_imagenet(path, dtype = np.float32):
     - X_test: (N_test, 3, 64, 64) array of testing images.
     - y_test: (N_test,) array of test labels; if test labels are not available
       (such as in student code) then y_test will be None.
+    - mean_image: (3, 64, 64) array giving mean training image
     """
     # First load wnids
     with open(os.path.join(path, 'wnids.txt'), 'r') as f:
@@ -83,7 +86,7 @@ def load_tiny_imagenet(path, dtype = np.float32):
     # Use words.txt to get names for each class
     with open(os.path.join(path, 'words.txt'), 'r') as f:
         wnid_to_words = dict(line.split('\t') for line in f)
-        for wnid, words in wnid_to_words.iteritems():
+        for wnid, words in wnid_to_words.items():
             wnid_to_words[wnid] = [w.strip() for w in words.split(',')]
     class_names = [wnid_to_words[wnid] for wnid in wnids]
 
@@ -163,7 +166,24 @@ def load_tiny_imagenet(path, dtype = np.float32):
         y_test = [wnid_to_label[img_file_to_wnid[img_file]] for img_file in img_files]
         y_test = np.array(y_test)
 
-    return class_names, X_train, y_train, X_val, y_val, X_test, y_test
+    mean_image = X_train.mean(axis=0)
+    if subtract_mean:
+        X_train -= mean_image[None]
+        X_val -= mean_image[None]
+        X_test -= mean_image[None]
+
+    data_dict = {
+      'class_names': class_names,
+      'X_train': X_train,
+      'y_train': y_train,
+      'X_val': X_val,
+      'y_val': y_val,
+      'X_test': X_test,
+      'y_test': y_test,
+      'mean_image': mean_image,
+    }
+    return data_dict
+
 
 def load_models(models_dir):
     """

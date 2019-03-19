@@ -5,8 +5,6 @@ Created on 2019/03/17
 author: lujie
 """
 
-
-
 import time, os, json
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,6 +12,7 @@ import matplotlib.pyplot as plt
 from IPython import embed
 
 from utils.rnn_layers import *
+from utils.gradient_check import *
 from utils.captioning_solver import CaptioningSolver
 from classifiers.rnn import CaptioningRNN
 from utils.coco_utils import load_coco_data, sample_coco_minibatch, decode_captions
@@ -32,7 +31,7 @@ if __name__ == '__main__':
     data = load_coco_data(max_train=50)
 
     small_rnn_model = CaptioningRNN(
-              cell_type='rnn',
+              cell_type='lstm',
               word_to_idx = data['word_to_idx'],
               input_dim = data['train_features'].shape[1],
               hidden_dim = 512,
@@ -46,7 +45,7 @@ if __name__ == '__main__':
                optim_config={
                  'learning_rate': 5e-3,
                },
-               lr_decay=0.95,
+               lr_decay=0.995,
                verbose=True, print_every=10,
              )
 
@@ -64,7 +63,7 @@ if __name__ == '__main__':
         gt_captions, features, urls = minibatch
         gt_captions = decode_captions(gt_captions, data['idx_to_word'])
 
-        sample_captions = small_rnn_model.reference(features)
+        sample_captions = small_rnn_model.inference(features)
         sample_captions = decode_captions(sample_captions, data['idx_to_word'])
 
         for gt_caption, sample_caption, url in zip(gt_captions, sample_captions, urls):

@@ -100,22 +100,22 @@ class CaptioningRNN(object):
 
         mask = (captions_out != self._null)
 
-        # step - 1
+        # step - 1 : fcn
         W_proj, b_proj = self.params['W_proj'], self.params['b_proj']
         initial_h = np.dot(features, W_proj) + b_proj
 
-        # step - 2
+        # step - 2 : encode the words
         W_embed = self.params['W_embed']
         embed_word, embed_word_cache = word_embedding_forward(captions_in, W_embed)
 
-        # step - 3
+        # step - 3 :
         Wx, Wh, b = self.params['Wx'], self.params['Wh'], self.params['b']
         if self.cell_type=='rnn':
           h, h_cache = rnn_forward(embed_word, initial_h, Wx, Wh, b)
         elif self.cell_type =='lstm':
           h, h_cache = lstm_forward(embed_word, initial_h, Wx, Wh, b)
 
-        # step - 4
+        # step - 4 : fcn
         W_vocab, b_vocab = self.params['W_vocab'], self.params['b_vocab']
         affine_forward_out, affine_forward_cache = temporal_affine_forward(h, W_vocab, b_vocab)
 
@@ -137,7 +137,7 @@ class CaptioningRNN(object):
         return loss, grads
 
 
-    def reference(self, features, max_length = 30):
+    def inference(self, features, max_length = 30):
         '''
         Inputs:
         - features: Array of input image features of shape (N, D).

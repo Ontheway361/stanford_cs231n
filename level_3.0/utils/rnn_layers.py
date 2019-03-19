@@ -9,6 +9,79 @@ from IPython import embed
 import numpy as np
 
 
+def word_embedding_forward(x, W):
+    """
+    Forward pass for word embeddings. We operate on minibatches of size N where
+    each sequence has length T. We assume a vocabulary of V words, assigning each
+    to a vector of dimension D.
+
+    Inputs:
+    - x: Integer array of shape (N, T) giving indices of words. Each element idx
+      of x muxt be in the range 0 <= idx < V.
+    - W: Weight matrix of shape (V, D) giving word vectors for all words.
+
+    Returns a tuple of:
+    - out: Array of shape (N, T, D) giving word vectors for all input words.
+    - cache: Values needed for the backward pass
+    """
+
+    out, cache = None, None
+    V, D = W.shape
+    N, T = x.shape
+    out = np.zeros((N, T, D))
+
+    for n in range(N):
+        for t in range(T):
+            out[n, t] = W[x[n, t]]
+
+    cache = {
+      'x': x,
+      'W': W,
+      'V': V,
+      'D': D,
+    }
+    return out, cache
+
+
+def word_embedding_backward(dout, cache):
+    """
+    Backward pass for word embeddings. We cannot back-propagate into the words
+    since they are integers, so we only return gradient for the word embedding
+    matrix.
+
+    HINT: Look up the function np.add.at
+
+    Inputs:
+    - dout: Upstream gradients of shape (N, T, D)
+    - cache: Values from the forward pass
+
+    Returns:
+    - dW: Gradient of word embedding matrix, of shape (V, D).
+    """
+    dW = None
+
+    x = cache['x']
+    W = cache['W']
+    V = cache['V']
+    D = cache['D']
+    dW = np.zeros((V, D))
+    np.add.at(dW, x, dout)
+
+    return dW
+
+
+def sigmoid(x):
+    ''' logistic sigmoid function '''
+
+    pos_mask, neg_mask = (x >= 0), (x < 0)
+    z = np.zeros_like(x)
+    z[pos_mask] = np.exp(-x[pos_mask])
+    z[neg_mask] = np.exp(x[neg_mask])
+    top = np.ones_like(x)
+    top[neg_mask] = z[neg_mask]
+    return top / (1 + z)
+
+
 def rnn_step_forward(x, prev_h, Wx, Wh, b):
     """
     Run the forward pass for a single timestep of a vanilla RNN that uses a tanh
@@ -150,79 +223,6 @@ def rnn_backward(dh, cache):
     return dx, dh0, dWx, dWh, db
 
 
-def word_embedding_forward(x, W):
-    """
-    Forward pass for word embeddings. We operate on minibatches of size N where
-    each sequence has length T. We assume a vocabulary of V words, assigning each
-    to a vector of dimension D.
-
-    Inputs:
-    - x: Integer array of shape (N, T) giving indices of words. Each element idx
-      of x muxt be in the range 0 <= idx < V.
-    - W: Weight matrix of shape (V, D) giving word vectors for all words.
-
-    Returns a tuple of:
-    - out: Array of shape (N, T, D) giving word vectors for all input words.
-    - cache: Values needed for the backward pass
-    """
-
-    out, cache = None, None
-    V, D = W.shape
-    N, T = x.shape
-    out = np.zeros((N, T, D))
-
-    for n in range(N):
-        for t in range(T):
-            out[n, t] = W[x[n, t]]
-
-    cache = {
-      'x': x,
-      'W': W,
-      'V': V,
-      'D': D,
-    }
-    return out, cache
-
-
-def word_embedding_backward(dout, cache):
-    """
-    Backward pass for word embeddings. We cannot back-propagate into the words
-    since they are integers, so we only return gradient for the word embedding
-    matrix.
-
-    HINT: Look up the function np.add.at
-
-    Inputs:
-    - dout: Upstream gradients of shape (N, T, D)
-    - cache: Values from the forward pass
-
-    Returns:
-    - dW: Gradient of word embedding matrix, of shape (V, D).
-    """
-    dW = None
-
-    x = cache['x']
-    W = cache['W']
-    V = cache['V']
-    D = cache['D']
-    dW = np.zeros((V, D))
-    np.add.at(dW, x, dout)
-
-    return dW
-
-
-def sigmoid(x):
-    ''' logistic sigmoid function '''
-
-    pos_mask, neg_mask = (x >= 0), (x < 0)
-    z = np.zeros_like(x)
-    z[pos_mask] = np.exp(-x[pos_mask])
-    z[neg_mask] = np.exp(x[neg_mask])
-    top = np.ones_like(x)
-    top[neg_mask] = z[neg_mask]
-    return top / (1 + z)
-
-
 def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     """
     Forward pass for a single timestep of an LSTM.
@@ -249,6 +249,7 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     _, H = prev_h.shape
 
     a = np.dot(x, Wx) + np.dot(prev_h, Wh) + b
+
     i = sigmoid(a[:, 0: H])
     f = sigmoid(a[:, H: 2*H])
     o = sigmoid(a[:, 2*H: 3*H])
@@ -322,19 +323,19 @@ def lstm_forward(x, h0, Wx, Wh, b):
     - h: Hidden states for all timesteps of all sequences, of shape (N, T, H)
     - cache: Values needed for the backward pass.
     """
-    h, cache = None, None
+
+    h, cache, cache = None, None, {}
 
     N, T, D = x.shape
     _, H = h0.shape
-    h = np.zeros((N,T,H))
-    c = np.zeros((N,T,H))
+    h, c  = np.zeros((N,T,H)), np.zeros((N,T,H))
     c0 = np.zeros((N,H))
-    cache = {}
+
     for t in range(T):
-      if t==0:
-          h[:,t,:], c[:,t,:], cache[t] = lstm_step_forward(x[:,t,:], h0, c0, Wx, Wh, b)
-      else:
-          h[:,t,:], c[:,t,:], cache[t] = lstm_step_forward(x[:,t,:], h[:,t-1,:], c[:,t-1,:], Wx, Wh, b)
+        if t==0:
+            h[:,t,:], c[:,t,:], cache[t] = lstm_step_forward(x[:,t,:], h0, c0, Wx, Wh, b)
+        else:
+            h[:,t,:], c[:,t,:], cache[t] = lstm_step_forward(x[:,t,:], h[:,t-1,:], c[:,t-1,:], Wx, Wh, b)
 
     return h, cache
 
@@ -382,21 +383,21 @@ def temporal_affine_forward(x, w, b):
     """
     Forward pass for a temporal affine layer. The input is a set of D-dimensional
     vectors arranged into a minibatch of N timeseries, each of length T. We use
-    an affine function to transform each of those vectors into a new vector of
-    dimension M.
+    an affine function to transform each of those vectors into a new vector of dimension M.
 
     Inputs:
-    - x: Input data of shape (N, T, D)
-    - w: Weights of shape (D, M)
+    - x: Input data of shape (N, T, H)
+    - w: Weights of shape (H, M)
     - b: Biases of shape (M,)
 
     Returns a tuple of:
     - out: Output data of shape (N, T, M)
     - cache: Values needed for the backward pass
     """
-    N, T, D = x.shape
-    M = b.shape[0]
-    out = x.reshape(N * T, D).dot(w).reshape(N, T, M) + b
+
+    N, T, H = x.shape
+    V = b.shape[0]
+    out = x.reshape(N * T, H).dot(w).reshape(N, T, V) + b
     cache = (x, w, b, out)
     return out, cache
 
