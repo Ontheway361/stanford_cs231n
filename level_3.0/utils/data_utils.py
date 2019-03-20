@@ -182,6 +182,7 @@ def load_tiny_imagenet(path, dtype = np.float32, subtract_mean = True):
       'y_test': y_test,
       'mean_image': mean_image,
     }
+
     return data_dict
 
 

@@ -7,9 +7,34 @@ author: lujie
 
 import numpy as np
 import os, tempfile
+import matplotlib.pyplot as plt
 from urllib import request, error
 from scipy.misc import imread
 from utils.fast_layers import conv_forward_fast
+
+
+
+def visual_mini_dataset(data = None, classes_to_show = 7, examples_per_class = 5):
+    ''' visual randomly selected iamge from target classes '''
+
+    class_idxs = np.random.choice(len(data['class_names']), size=classes_to_show, replace=False)
+
+    for i, class_idx in enumerate(class_idxs):
+
+        train_idxs, = np.nonzero(data['y_train'] == class_idx)
+        train_idxs  = np.random.choice(train_idxs, size=examples_per_class, replace=False)
+
+        for j, train_idx in enumerate(train_idxs):
+
+            img = deprocess_image(data['X_train'][train_idx], data['mean_image'])
+            plt.subplot(examples_per_class, classes_to_show, 1 + i + classes_to_show * j)
+            if j == 0:
+                plt.title(data['class_names'][class_idx][0])
+            plt.imshow(img)
+            plt.gca().axis('off')
+    plt.savefig('./mini_dataset.png', dpi=400); plt.close()
+
+
 
 
 def blur_image(X):
@@ -53,7 +78,7 @@ def preprocess_image(img, mean_img, mean='image'):
     return img.astype(np.float32).transpose(2, 0, 1)[None] - mean
 
 
-def deprocess_image(img, mean_img, mean='image', renorm=False):
+def deprocess_image(img, mean_img, mean = 'image', renorm = False):
     """
     Add mean pixel, transpose, and convert to uint8
 
@@ -63,6 +88,7 @@ def deprocess_image(img, mean_img, mean='image', renorm=False):
     Returns:
     - (H, W, 3)
     """
+
     if mean == 'image': mean = mean_img
     elif mean == 'pixel': mean = mean_img.mean(axis=(1, 2), keepdims=True)
     elif mean == 'none': mean = 0
@@ -71,6 +97,7 @@ def deprocess_image(img, mean_img, mean='image', renorm=False):
     if img.ndim == 3:
         img = img[None]
     img = (img + mean)[0].transpose(1, 2, 0)
+
     if renorm:
         low, high = img.min(), img.max()
         img = 255.0 * (img - low) / (high - low)

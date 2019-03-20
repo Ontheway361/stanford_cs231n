@@ -11,44 +11,31 @@ import matplotlib.pyplot as plt
 
 from IPython import embed
 
-from utils.data_utils import load_tiny_imagenet
 from utils.gradient_check import *
+from utils.data_utils import load_tiny_imagenet
+from utils.image_utils import visual_mini_dataset
 from classifiers.pretrained_cnn import PretrainedCNN
-from utils.coco_utils import load_coco_data, sample_coco_minibatch, decode_captions
-from utils.image_utils import image_from_url
-
-
-def rel_error(x, y):
-    """ returns relative error """
-
-    return np.max(np.abs(x - y) / (np.maximum(1e-8, np.abs(x) + np.abs(y))))
 
 
 if __name__ == '__main__':
 
-
     data = load_tiny_imagenet('../dataset/tiny-imagenet-100-A', subtract_mean=True)
 
-    for i, names in enumerate(data['class_names']):
-        print (i, ' '.join('"%s"' % name for name in names))
+    # classes_to_show, examples_per_class = 7, 5
+    #
+    # visual_mini_dataset(data, classes_to_show, examples_per_class)
 
-    classes_to_show = 7
-    examples_per_class = 5
+    model = PretrainedCNN(h5_file='../datasets/pretrained_model.h5')
 
-    class_idxs = np.random.choice(len(data['class_names']), size=classes_to_show, replace=False)
+    batch_size = 100
+    # Test the model on training data
+    mask = np.random.randint(data['X_train'].shape[0], size=batch_size)
+    X, y = data['X_train'][mask], data['y_train'][mask]
+    y_pred = model.loss(X).argmax(axis=1)
+    print('Training accuracy: ', (y_pred == y).mean())
 
-    embed()
-
-    for i, class_idx in enumerate(class_idxs):
-
-        train_idxs, = np.nonzero(data['y_train'] == class_idx)
-        train_idxs = np.random.choice(train_idxs, size=examples_per_class, replace=False)
-        for j, train_idx in enumerate(train_idxs):
-            img = deprocess_image(data['X_train'][train_idx], data['mean_image'])
-            plt.subplot(examples_per_class, classes_to_show, 1 + i + classes_to_show * j)
-            if j == 0:
-                plt.title(data['class_names'][class_idx][0])
-            plt.imshow(img)
-            plt.gca().axis('off')
-
-    plt.show()
+    # Test the model on validation data
+    mask = np.random.randint(data['X_val'].shape[0], size=batch_size)
+    X, y = data['X_val'][mask], data['y_val'][mask]
+    y_pred = model.loss(X).argmax(axis=1)
+    print('Validation accuracy: ', (y_pred == y).mean())

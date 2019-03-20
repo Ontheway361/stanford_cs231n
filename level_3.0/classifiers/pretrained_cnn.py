@@ -52,7 +52,8 @@ class PretrainedCNN(object):
             self.params['beta%d' % (i + 1)] = np.zeros(next_dim)
             self.bn_params.append({'mode': 'train'})
             prev_dim = next_dim
-            if self.conv_params[i]['stride'] == 2: cur_size /= 2
+            if self.conv_params[i]['stride'] == 2:
+                cur_size = cur_size // 2
 
         # Add a fully-connected layers
         fan_in = cur_size * cur_size * self.num_filters[-1]
@@ -152,7 +153,7 @@ class PretrainedCNN(object):
         layer_caches = []
 
         prev_a = X
-        for i in xrange(start, end + 1):
+        for i in range(start, end + 1):
             i1 = i + 1
             if 0 <= i < len(self.conv_params):
                 # This is a conv layer
@@ -175,7 +176,7 @@ class PretrainedCNN(object):
                 # This is the last fully-connected layer that produces scores
                 w, b = self.params['W%d' % i1], self.params['b%d' % i1]
                 next_a, cache = affine_forward(prev_a, w, b)
-                
+
             else:
                 raise ValueError('Invalid layer index %d' % i)
             layer_caches.append(cache)
