@@ -109,17 +109,33 @@ def conv_relu_pool_forward(x, w, b, sandwich_param):
 
 
 def conv_relu_pool_backward(dout, cache):
-  """
-  Backward pass for the conv-relu-pool convenience layer
-  """
+    ''' Backward pass for the conv-relu-pool convenience layer '''
 
-  conv_cache, relu_cache, pool_cache = cache
-  ds = max_pool_backward_fast(dout, pool_cache)
-  da = relu_backward(ds, relu_cache)
-  dx, dw, db = conv_backward_fast(da, conv_cache)
+    conv_cache, relu_cache, pool_cache = cache
+    ds = max_pool_backward_fast(dout, pool_cache)
+    da = relu_backward(ds, relu_cache)
+    dx, dw, db = conv_backward_fast(da, conv_cache)
 
-  return dx, dw, db
+    return dx, dw, db
 
+def conv_bn_relu_forward(x, w, b, gamma, beta, conv_param, bn_param):
+    ''' no pooling version '''
+
+    a, conv_cache = conv_forward_fast(x, w, b, conv_param)
+    an, bn_cache = spatial_batchnorm_forward(a, gamma, beta, bn_param)
+    out, relu_cache = relu_forward(an)
+    cache = (conv_cache, bn_cache, relu_cache)
+    return out, cache
+
+
+def conv_bn_relu_backward(dout, cache):
+    ''' no pooling version '''
+    
+    conv_cache, bn_cache, relu_cache = cache
+    dan = relu_backward(dout, relu_cache)
+    da, dgamma, dbeta = spatial_batchnorm_backward(dan, bn_cache)
+    dx, dw, db = conv_backward_fast(da, conv_cache)
+    return dx, dw, db, dgamma, dbeta
 
 def conv_bn_relu_pool_forward(x, w, b, gamma, beta, bn_param, sandwich_param):
     '''

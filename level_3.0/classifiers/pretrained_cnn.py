@@ -25,15 +25,15 @@ class PretrainedCNN(object):
 
         # TODO: In the future it would be nice if the architecture could be loaded from
         # the HDF5 file rather than being hardcoded. For now this will have to do.
-        self.conv_params.append({'stride': 2, 'pad': 2})
-        self.conv_params.append({'stride': 1, 'pad': 1})
-        self.conv_params.append({'stride': 2, 'pad': 1})
-        self.conv_params.append({'stride': 1, 'pad': 1})
-        self.conv_params.append({'stride': 2, 'pad': 1})
-        self.conv_params.append({'stride': 1, 'pad': 1})
-        self.conv_params.append({'stride': 2, 'pad': 1})
-        self.conv_params.append({'stride': 1, 'pad': 1})
-        self.conv_params.append({'stride': 2, 'pad': 1})
+        self.conv_params.append({'stride': 2, 'padding': 2})
+        self.conv_params.append({'stride': 1, 'padding': 1})
+        self.conv_params.append({'stride': 2, 'padding': 1})
+        self.conv_params.append({'stride': 1, 'padding': 1})
+        self.conv_params.append({'stride': 2, 'padding': 1})
+        self.conv_params.append({'stride': 1, 'padding': 1})
+        self.conv_params.append({'stride': 2, 'padding': 1})
+        self.conv_params.append({'stride': 1, 'padding': 1})
+        self.conv_params.append({'stride': 2, 'padding': 1})
 
         self.filter_sizes = [5, 3, 3, 3, 3, 3, 3, 3, 3]
         self.num_filters = [64, 64, 128, 128, 256, 256, 512, 512, 1024]
