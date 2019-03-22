@@ -29,10 +29,10 @@ class PretrainedCNN(object):
         self.conv_params.append({'stride': 1, 'padding': 1})
         self.conv_params.append({'stride': 2, 'padding': 1})
         self.conv_params.append({'stride': 1, 'padding': 1})
-        self.conv_params.append({'stride': 2, 'padding': 1})
+        self.conv_params.append({'stride': 2, 'padding': 1})   # C5
         self.conv_params.append({'stride': 1, 'padding': 1})
-        self.conv_params.append({'stride': 2, 'padding': 1})
-        self.conv_params.append({'stride': 1, 'padding': 1})
+        self.conv_params.append({'stride': 2, 'padding': 1})   # C7
+        self.conv_params.append({'stride': 1, 'padding': 1})   #
         self.conv_params.append({'stride': 2, 'padding': 1})
 
         self.filter_sizes = [5, 3, 3, 3, 3, 3, 3, 3, 3]
@@ -163,7 +163,7 @@ class PretrainedCNN(object):
                 bn_param = self.bn_params[i]
                 bn_param['mode'] = mode
                 next_a, cache = conv_bn_relu_forward(prev_a, w, b, gamma, beta, conv_param, bn_param)
-
+                # print('conv - ', i+1, next_a.shape)
             elif i == len(self.conv_params):
                 # This is the fully-connected hidden layer
                 w, b = self.params['W%d' % i1], self.params['b%d' % i1]
@@ -171,6 +171,7 @@ class PretrainedCNN(object):
                 bn_param = self.bn_params[i]
                 bn_param['mode'] = mode
                 next_a, cache = affine_bn_relu_forward(prev_a, w, b, gamma, beta, bn_param)
+
 
             elif i == len(self.conv_params) + 1:
                 # This is the last fully-connected layer that produces scores
@@ -181,6 +182,7 @@ class PretrainedCNN(object):
                 raise ValueError('Invalid layer index %d' % i)
             layer_caches.append(cache)
             prev_a = next_a
+
 
         out = prev_a
         cache = (start, end, layer_caches)

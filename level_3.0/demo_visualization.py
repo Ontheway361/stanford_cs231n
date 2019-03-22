@@ -13,7 +13,7 @@ from IPython import embed
 
 from utils.gradient_check import *
 from utils.data_utils import load_tiny_imagenet
-from utils.image_utils import visual_mini_dataset
+from utils.image_utils import *
 from classifiers.pretrained_cnn import PretrainedCNN
 
 
@@ -25,20 +25,23 @@ if __name__ == '__main__':
     #
     # visual_mini_dataset(data, classes_to_show, examples_per_class)
 
-    batch_size = 100
-    # Test the model on training data
-    mask_train = np.random.randint(data['X_train'].shape[0], size=batch_size)
-    train_X, trian_y = data['X_train'][mask_train], data['y_train'][mask_train]
-    mask = np.random.randint(data['X_val'].shape[0], size=batch_size)
-    X, y = data['X_val'][mask], data['y_val'][mask]
-    del data
+    # batch_size = 100
+    # # Test the model on training data
+    # mask_train = np.random.randint(data['X_train'].shape[0], size=batch_size)
+    # train_X, trian_y = data['X_train'][mask_train], data['y_train'][mask_train]
+    # mask = np.random.randint(data['X_val'].shape[0], size=batch_size)
+    # X, y = data['X_val'][mask], data['y_val'][mask]
+    # del data
     #
     model = PretrainedCNN(h5_file = '../dataset/pretrained_model.h5')
 
-    y_pred = model.loss(train_X).argmax(axis=1)
-    print('Training accuracy: ', (y_pred == trian_y).mean())
+    # y_pred = model.loss(train_X).argmax(axis=1)
+    # print('Training accuracy: ', (y_pred == trian_y).mean())
+    #
+    # # Test the model on validation data
+    #
+    # y_pred = model.loss(X).argmax(axis=1)
+    # print('Validation accuracy: ', (y_pred == y).mean())
 
-    # Test the model on validation data
-
-    y_pred = model.loss(X).argmax(axis=1)
-    print('Validation accuracy: ', (y_pred == y).mean())
+    # show_saliency_maps(data, model)
+    show_fooling_iamge(data, model)
