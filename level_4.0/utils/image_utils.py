@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on 2019/03/24
+author: lujie
+"""
+
 from __future__ import print_function
 from future import standard_library
 standard_library.install_aliases()
@@ -5,11 +12,67 @@ from builtins import range
 import urllib.request, urllib.error, urllib.parse, os, tempfile
 
 import numpy as np
+import torchvision.transforms as T
 from scipy.misc import imread, imresize
 
-"""
-Utility functions used for viewing and processing images.
-"""
+SQUEEZENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+SQUEEZENET_STD  = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+
+
+
+def preprocess(img, size=512):
+    '''
+    Normalize the input image,  unsqueeze demension
+
+    Input:
+    - img: (H, W, 3)
+
+    Returns:
+    - (1, 3, H, 3)
+    '''
+    transform = T.Compose([
+        T.Resize(size),
+        T.ToTensor(),
+        T.Normalize(mean=SQUEEZENET_MEAN.tolist(), std=SQUEEZENET_STD.tolist()),
+        T.Lambda(lambda x: x[None]),
+    ])
+    return transform(img)
+
+def deprocess(img):
+    '''
+    Denormalize, squeeze the dimension
+
+    Input:
+    - (1, 3, H, W) or (3, H, W)
+
+    Returns:
+    - (H, W, 3)
+    '''
+
+    transform = T.Compose([
+        T.Lambda(lambda x: x[0]),
+        T.Normalize(mean=[0, 0, 0], std=[1.0 / s for s in SQUEEZENET_STD.tolist()]),
+        T.Normalize(mean=[-m for m in SQUEEZENET_MEAN.tolist()], std=[1, 1, 1]),
+        T.Lambda(rescale),
+        T.ToPILImage(),
+    ])
+    return transform(img)
+
+def rescale(x):
+    ''' Rescale the image '''
+
+    low, high = x.min(), x.max()
+    x_rescaled = (x - low) / (high - low)
+    return x_rescaled
+
+def rel_error(x,y):
+    return np.max(np.abs(x - y) / (np.maximum(1e-8, np.abs(x) + np.abs(y))))
+
+def features_from_img(imgpath, imgsize):
+    img = preprocess(PIL.Image.open(imgpath), size=imgsize)
+    img_var = img.type(dtype)
+    return extract_features(img_var, cnn), img_var
+
 
 def blur_image(X):
     """
@@ -33,12 +96,9 @@ def blur_image(X):
     return conv_forward_fast(X, w_blur, b_blur, blur_param)[0]
 
 
-SQUEEZENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
-SQUEEZENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-
 def preprocess_image(img):
     """Preprocess an image for squeezenet.
-    
+
     Subtracts the pixel mean and divides by the standard deviation.
     """
     return (img.astype(np.float32)/255.0 - SQUEEZENET_MEAN) / SQUEEZENET_STD
