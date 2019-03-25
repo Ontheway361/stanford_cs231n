@@ -15,23 +15,41 @@ import torchvision.transforms as T
 
 from IPython import embed
 
-from scipy.misc import imread
-from collections import namedtuple
-from utils.image_utils import *
+from utils.transfer_helper import *
 
 
 if __name__ == '__main__':
 
-    dtype = torch.FloatTensor
+    dtype = t.FloatTensor
     # dtype = torch.cuda.FloatTensor
 
 
-    base_model = torchvision.models.squeezenet1_1(pretrained=True).features
+    base_model = tv.models.squeezenet1_1(pretrained=True).features
     base_model.type(dtype)
 
     for param in base_model.parameters():
         param.requires_grad = False
 
-    answers = dict(np.load('style-transfer-checks.npz'))
+    # answers = dict(np.load('./utils/style-transfer-checks.npz'))
+    #
+    # content_loss_test(answers['cl_out'], base_model)
+    #
+    # gram_matrix_test(answers['gm_out'], base_model)
+    #
+    # style_loss_test(answers['sl_out'], base_model)
+    #
+    # tv_loss_test(answers['tv_out'])
 
-    content_loss_test(answers['cl_out'])
+    params1 = {
+    'content_image' : './styles/ret_campus.jpg',
+    'style_image' : './styles/starry_night.jpg',
+    'image_size' : 192,
+    'style_size' : 192,
+    'content_layer' : 3,
+    'content_weight' : 5e-3, # 5e-2
+    'style_layers' : (1, 4, 6, 7),   # (1, 4, 6, 7),
+    'style_weights' : (20000, 500, 12, 1),
+    'tv_weight' : 5e-2
+    }
+
+    style_transfer(model = base_model, **params1)
