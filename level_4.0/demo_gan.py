@@ -48,16 +48,16 @@ if __name__ == '__main__':
     NOISE_DIM = 96
     batch_size = 128
     #
-    # mnist_train = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=True,
-    #                            transform=T.ToTensor())
-    # loader_train = DataLoader(mnist_train, batch_size=batch_size,
-    #                           sampler=ChunkSampler(NUM_TRAIN, 0))
-    #
-    # mnist_val = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=True,
-    #                            transform=T.ToTensor())
-    # loader_val = DataLoader(mnist_val, batch_size=batch_size,
-    #                         sampler=ChunkSampler(NUM_VAL, NUM_TRAIN))
-    #
+    mnist_train = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=True,
+                               transform=T.ToTensor())
+    loader_train = DataLoader(mnist_train, batch_size=batch_size,
+                              sampler=ChunkSampler(NUM_TRAIN, 0))
+
+    mnist_val = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=True,
+                               transform=T.ToTensor())
+    loader_val = DataLoader(mnist_val, batch_size=batch_size,
+                            sampler=ChunkSampler(NUM_VAL, NUM_TRAIN))
+
     # imgs = loader_train.__iter__().next()[0].view(batch_size, 784).numpy().squeeze()
 
     #show_images(imgs)
@@ -87,6 +87,6 @@ if __name__ == '__main__':
     # Use the function you wrote earlier to get optimizers for the Discriminator and the Generator
     D_solver = get_optimizer(D)
     G_solver = get_optimizer(G)
-    
+
     # Run it!
-    gan_runner(D, G, D_solver, G_solver, discriminator_loss, generator_loss)
+    # gan_runner(D, G, D_solver, G_solver, discriminator_loss, generator_loss)
