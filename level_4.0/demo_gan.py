@@ -45,48 +45,30 @@ if __name__ == '__main__':
     NUM_TRAIN = 50000
     NUM_VAL = 5000
 
-    NOISE_DIM = 96
+    NOISE_DIM = 288  # 96 for mnist
     batch_size = 128
     #
-    mnist_train = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=True,
+    mnist_train = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=False,
                                transform=T.ToTensor())
     loader_train = DataLoader(mnist_train, batch_size=batch_size,
                               sampler=ChunkSampler(NUM_TRAIN, 0))
 
-    mnist_val = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=True,
+    mnist_val = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=False,
                                transform=T.ToTensor())
     loader_val = DataLoader(mnist_val, batch_size=batch_size,
                             sampler=ChunkSampler(NUM_VAL, NUM_TRAIN))
 
-    # imgs = loader_train.__iter__().next()[0].view(batch_size, 784).numpy().squeeze()
-
-    #show_images(imgs)
-
-    # test_sample_noise()
-
     dtype = torch.FloatTensor
-    # dtype = torch.cuda.FloatTensor ## UNCOMMENT THIS LINE IF YOU'RE ON A GPU!
+    # dtype = t.cuda.FloatTensor ## UNCOMMENT THIS LINE IF YOU'RE ON A GPU!
 
-    # test_discriminator()
-    #
-    # test_generator()
 
-    # answers = dict(np.load('./utils/gan-checks.npz'))
-
-    # test_discriminator_loss(answers['logits_real'], answers['logits_fake'], \
-    #                             answers['d_loss_true'])
-
-    # test_generator_loss(answers['logits_fake'], answers['g_loss_true'])
-
-    # Make the discriminator
-    D = discriminator().type(dtype)
-
-    # Make the generator
-    G = generator().type(dtype)
-
-    # Use the function you wrote earlier to get optimizers for the Discriminator and the Generator
-    D_solver = get_optimizer(D)
-    G_solver = get_optimizer(G)
-
-    # Run it!
-    # gan_runner(D, G, D_solver, G_solver, discriminator_loss, generator_loss)
+    params = {
+    'adversarial': 'deep_conv',
+    'loss_type'  : 'ls_gan',
+    'show_every' : 250,
+    'batch_size' : 128,
+    'noise_size' : 96,
+    'num_epochs' : 10,
+    'dtype'      : dtype
+    }
+    gan_runner(loader_train, **params)

@@ -40,7 +40,7 @@ if __name__ == '__main__':
     #
     # tv_loss_test(answers['tv_out'])
 
-    params1 = {
+    params = {
     'content_image' : './styles/ret_campus.jpg',
     'style_image' : './styles/starry_night.jpg',
     'image_size' : 192,
@@ -52,4 +52,4 @@ if __name__ == '__main__':
     'tv_weight' : 5e-2
     }
 
-    style_transfer(model = base_model, **params1)
+    style_transfer(model = base_model, **params)
