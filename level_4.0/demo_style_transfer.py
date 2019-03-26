@@ -30,20 +30,10 @@ if __name__ == '__main__':
     for param in base_model.parameters():
         param.requires_grad = False
 
-    # answers = dict(np.load('./utils/style-transfer-checks.npz'))
-    #
-    # content_loss_test(answers['cl_out'], base_model)
-    #
-    # gram_matrix_test(answers['gm_out'], base_model)
-    #
-    # style_loss_test(answers['sl_out'], base_model)
-    #
-    # tv_loss_test(answers['tv_out'])
-
     params = {
-    'content_image' : './styles/ret_campus.jpg',
+    'content_image' : './styles/ret_city.jpg',
     'style_image' : './styles/starry_night.jpg',
-    'image_size' : 192,
+    'image_size' : 384,
     'style_size' : 192,
     'content_layer' : 3,
     'content_weight' : 5e-3, # 5e-2

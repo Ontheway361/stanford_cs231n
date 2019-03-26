@@ -48,12 +48,12 @@ if __name__ == '__main__':
     NOISE_DIM = 288  # 96 for mnist
     batch_size = 128
     #
-    mnist_train = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=False,
+    mnist_train = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=True,
                                transform=T.ToTensor())
     loader_train = DataLoader(mnist_train, batch_size=batch_size,
                               sampler=ChunkSampler(NUM_TRAIN, 0))
 
-    mnist_val = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=False,
+    mnist_val = dset.MNIST('../../cs231n_dataset/MNIST_data', train=True, download=True,
                                transform=T.ToTensor())
     loader_val = DataLoader(mnist_val, batch_size=batch_size,
                             sampler=ChunkSampler(NUM_VAL, NUM_TRAIN))

@@ -285,8 +285,6 @@ def style_transfer(model, content_image, style_image, image_size, style_size, co
 
     # Extract features for the content image
     content_img = preprocess(PIL.Image.open(content_image), size=image_size)
-    print(content_img.max(), content_img.min())
-    embed()
     content_img = content_img.type(dtype)
     content_feats = extract_features(content_img, model)
     content_target = content_feats[content_layer].clone()
