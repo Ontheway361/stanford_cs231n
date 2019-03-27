@@ -7,7 +7,9 @@ author: lujie
 
 import torch as t
 from torch import  nn
+import numpy as np
 from IPython import embed
+from torch.autograd import Variable
 from torch.nn import  functional as F
 
 
@@ -78,54 +80,77 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.pre(x)
+        ''' forward of resnet34 '''
 
+        x = self.pre(x)
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-
         x = F.avg_pool2d(x, 7)
         x = x.view(x.size(0), -1)
         out = self.fc(x)
         return out
 
+    def loss(self, score, label):
+        ''' loss function '''
 
-def softmax_loss(x, y):
-  """
-  Computes the loss and gradient for softmax classification.
+        loss_function = t.nn.CrossEntropyLoss()
+        loss_value = loss_function(score, label)
 
-  Inputs:
-  - x: Input data, of shape (N, C) where x[i, j] is the score for the jth class
-    for the ith input.
-  - y: Vector of labels, of shape (N,) where y[i] is the label for x[i] and
-    0 <= y[i] < C
-
-  Returns a tuple of:
-  - loss: Scalar giving the loss
-  - dx: Gradient of the loss with respect to x
-  """
-  probs = np.exp(x - np.max(x, axis=1, keepdims=True))
-  probs /= np.sum(probs, axis=1, keepdims=True)
-  N = x.shape[0]
-  loss = -np.sum(np.log(probs[np.arange(N), y])) / N
-  dx = probs.copy()
-  dx[np.arange(N), y] -= 1
-  dx /= N
-  return loss, dx
+        return loss_value
 
 
-def classifier(model, loader_train, num_epochs = 10, batch_size = 128):
-    ''' train the resnet34 as a classifier '''
+def net_trainer(model, loader_train, num_epochs = 10, batch_size = 128):
+    '''
+    Train the resnet34 as a classifier
 
+    step - 1. set the optimizer and loss_func
+    step - 2. start the training process
+    step - 3. return the trained_net as a classifier
+    '''
+
+    # step - 1
+    optimizer = t.optim.Adam(model.parameters())
+
+    # step - 2
     iter_count = 0
     for epoch in range(num_epochs):
 
-        for x, _ in loader_train:
+        train_loss = 0; train_acc = 0.0; num_train = 0
+        for batch_x, batch_y in loader_train:
 
-            if len(x) != batch_size:
+            batch_x, batch_y = Variable(batch_x), Variable(batch_y)
+            if len(batch_x) != batch_size:
                 continue
-            score = model(x)
-            loss = softmax_losss(score, y)
+            score = model(batch_x)
+            loss  = model.loss(score, batch_y)
+            num_train += len(batch_x)
+            train_loss += loss.item()
+            pred_y = t.max(score, 1)[1]
+            logis = (pred_y == batch_y).sum()
+            train_acc += logis.item()
+            optimizer.zero_grad()
             loss.backward()
-            model.step()
+            optimizer.step()
+        print('epoch %2d; \ttrain Loss: %.10f;\ttrain acc : %5.4f' % \
+                   (epoch, train_loss/num_train, train_acc/num_train))
+    return model
+
+
+def net_test(model, loader_test):
+    ''' test the net_classifier '''
+
+    model = model.eval()
+    eval_acc = 0.0; eval_loss = 0.0; num_test = 0
+    for batch_x, batch_y in loader_test:
+
+        batch_x, batch_y = Variable(batch_x, requires_grad=False), Variable(batch_y, requires_grad=False)
+        score = model(batch_x)
+        loss  = model.loss(score, batch_y)
+        eval_loss += loss.item()
+        pred = t.max(out, 1)[1]
+        num_correct = (pred == batch_y).sum()
+        eval_acc += num_correct.item()
+        num_test += len(batch_y)
+    print('test_loss : %.10f\ttest acc : %5.4f' % (eval_loss/num_test, eval_acc/num_test))
