@@ -149,7 +149,7 @@ def net_test(model, loader_test):
         score = model(batch_x)
         loss  = model.loss(score, batch_y)
         eval_loss += loss.item()
-        pred = t.max(out, 1)[1]
+        pred = t.max(score, 1)[1]
         num_correct = (pred == batch_y).sum()
         eval_acc += num_correct.item()
         num_test += len(batch_y)
