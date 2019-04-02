@@ -10,7 +10,7 @@ from torch import  nn
 import numpy as np
 from IPython import embed
 from torch.autograd import Variable
-from torch.nn import  functional as F
+from torch.nn import functional as F
 
 
 class ResidualBlock(nn.Module):
@@ -138,7 +138,7 @@ def net_trainer(model, loader_train, num_epochs = 10, batch_size = 128):
     return model
 
 
-def net_test(model, loader_test):
+def net_infer(model, loader_test):
     ''' test the net_classifier '''
 
     model = model.eval()

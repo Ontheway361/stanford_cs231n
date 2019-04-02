@@ -27,4 +27,4 @@ if __name__ == '__main__':
 
     model = ResNet(10)
     model = net_trainer(model, train_loader, 10, 128)
-    net_test(model, test_loader)
+    net_infer(model, test_loader)
