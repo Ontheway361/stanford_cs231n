@@ -6,6 +6,7 @@ author: lujie
 """
 
 import torch as t
+from tqdm import tqdm
 from torch import  nn
 import numpy as np
 from IPython import embed
@@ -87,7 +88,7 @@ class ResNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-        x = F.avg_pool2d(x, 7)
+        x = F.avg_pool2d(x, 1)  # 7
         x = x.view(x.size(0), -1)
         out = self.fc(x)
         return out
@@ -101,40 +102,52 @@ class ResNet(nn.Module):
         return loss_value
 
 
-def net_trainer(model, loader_train, num_epochs = 10, batch_size = 128):
+def net_trainer(model, loader_train, test_loader, num_epochs = 10, batch_size = 128, save_freq = 10):
     '''
     Train the resnet34 as a classifier
 
+    step - 0. check the status of GPU
     step - 1. set the optimizer and loss_func
     step - 2. start the training process
     step - 3. return the trained_net as a classifier
     '''
 
+    # step - 0
+    device = t.device("cuda:0" if t.cuda.is_available() else "cpu")
+
     # step - 1
     optimizer = t.optim.Adam(model.parameters())
 
     # step - 2
-    iter_count = 0
     for epoch in range(num_epochs):
 
-        train_loss = 0; train_acc = 0.0; num_train = 0
-        for batch_x, batch_y in loader_train:
+        running_loss = 0; running_acc = 0.0; num_instance = 0
 
-            batch_x, batch_y = Variable(batch_x), Variable(batch_y)
+        for batch_x, batch_y in tqdm(loader_train):
+
+            batch_x = Variable(batch_x, requires_grad=True).to(device)
+            batch_y = Variable(batch_y).to(device)
+
             if len(batch_x) != batch_size:
                 continue
+
             score = model(batch_x)
             loss  = model.loss(score, batch_y)
-            num_train += len(batch_x)
-            train_loss += loss.item()
+
+            num_instance += len(batch_x)
+            running_loss += loss.item()
             pred_y = t.max(score, 1)[1]
             logis = (pred_y == batch_y).sum()
-            train_acc += logis.item()
+            running_acc += logis.item()
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
         print('epoch %2d; \ttrain Loss: %.10f;\ttrain acc : %5.4f' % \
-                   (epoch, train_loss/num_train, train_acc/num_train))
+                   (epoch, running_loss/num_instance, running_acc/num_instance))
+
+        net_infer(model, test_loader)
+
     return model
 
 
@@ -142,10 +155,14 @@ def net_infer(model, loader_test):
     ''' test the net_classifier '''
 
     model = model.eval()
+    device = t.device("cuda:0" if t.cuda.is_available() else "cpu"
     eval_acc = 0.0; eval_loss = 0.0; num_test = 0
-    for batch_x, batch_y in loader_test:
 
-        batch_x, batch_y = Variable(batch_x, requires_grad=False), Variable(batch_y, requires_grad=False)
+    for batch_x, batch_y in tqdm(loader_test):
+
+        batch_x = Variable(batch_x, requires_grad=False).to(device)
+        batch_y = Variable(batch_y).to(device)
+
         score = model(batch_x)
         loss  = model.loss(score, batch_y)
         eval_loss += loss.item()
