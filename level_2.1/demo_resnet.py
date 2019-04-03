@@ -6,7 +6,7 @@ author: lujie
 """
 
 import time
-import torch as t
+import torch
 import torchvision as tv
 from utils.resnet_utils import *
 import torch.utils.data.dataloader as Data
@@ -17,14 +17,22 @@ if __name__ == '__main__':
 
 
     train_data = tv.datasets.CIFAR10('../../cs231n_dataset/CIFAR10_data', train = True, \
-                     transform = tv.transforms.ToTensor(), download=False)
+                     transform = tv.transforms.Compose([
+                         tv.transforms.ToTensor(),
+                         tv.transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+                     ]), download = False)
 
     test_data  = tv.datasets.CIFAR10('../../cs231n_dataset/CIFAR10_data', train = False, \
-                     transform = tv.transforms.ToTensor(), download=False)
+                     transform = tv.transforms.Compose([
+                         tv.transforms.ToTensor(), 
+                         tv.transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]) 
+                     ]), download = False)
 
-    train_loader = Data.DataLoader(dataset=train_data, batch_size=128, shuffle=True)
-    test_loader  = Data.DataLoader(dataset=test_data, batch_size=128)
+    train_loader = Data.DataLoader(dataset=train_data, batch_size=128, shuffle=True, num_workers=4)
+    test_loader  = Data.DataLoader(dataset=test_data, batch_size=128, num_workers=4)
 
-    model = ResNet(10)
-    model = net_trainer(model, train_loader, 10, 128)
+    device       = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    model = ResNet(10).to(device)
+    model = net_trainer(model, train_loader, 20, 128)
     net_infer(model, test_loader)
