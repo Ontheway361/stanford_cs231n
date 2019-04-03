@@ -6,6 +6,7 @@ author: lujie
 """
 
 import torch as t
+from tqdm import tqdm
 from torch.autograd import Variable
 
 
@@ -51,21 +52,29 @@ class LeNets(t.nn.Module):
 
 def net_trainer(dataloader = None, num_epoch = 10):
     '''
-    step -1. set the optimizer and loss_func
-    step -2. training process go
+    step - 0. check the status of GPU
+    step - 1. set the optimizer and loss_func
+    step - 2. training process go
     '''
+  
+    # step - 0
+    device = t.device("cuda:0" if t.cuda.is_available() else "cpu")
+
 
     # step - 1
-    model = LeNets(); print(model)
+    model = LeNets().to(device)
     optimizer = t.optim.Adam(model.parameters())
 
     # step - 2
     for epoch in range(num_epoch):
 
         train_loss = 0; train_acc = 0.0; num_train = 0
-        for batch_x, batch_y in dataloader:
 
-            batch_x, batch_y = Variable(batch_x), Variable(batch_y)
+        for batch_x, batch_y in tqdm(dataloader):
+
+            batch_x = Variable(batch_x, requires_grad=True).to(device)
+            batch_y = Variable(batch_y).to(device)
+
             out = model(batch_x)
             loss = model.loss_fun(out, batch_y)
             train_loss += loss.item()
@@ -73,6 +82,7 @@ def net_trainer(dataloader = None, num_epoch = 10):
             train_correct = (pred == batch_y).sum()
             train_acc += train_correct.item()
             num_train += len(batch_y)
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -88,9 +98,12 @@ def net_infer(model = None, test_loader = None):
 
     model = model.eval()
     eval_acc = 0.0; eval_loss = 0.0; num_test = 0
-    for batch_x, batch_y in test_loader:
 
-        batch_x, batch_y = Variable(batch_x, requires_grad=False), Variable(batch_y, requires_grad=False)
+    for batch_x, batch_y in tqdm(test_loader):
+
+        batch_x = Variable(batch_x, requires_grad=False).to(device)
+        batch_y = Variable(batch_y).to(device)
+
         out = model(batch_x)
         loss = model.loss_fun(out, batch_y)
         eval_loss += loss.item()
