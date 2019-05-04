@@ -71,8 +71,7 @@ def conv_forward_fast(x, w, b, conv_param):
     shape = (C, HH, WW, N, out_h, out_w)
     strides = (H * W, W, 1, C * H * W, stride * W, stride)
     strides = x.itemsize * np.array(strides)
-    x_stride = np.lib.stride_tricks.as_strided(x_padded,
-                  shape=shape, strides=strides)
+    x_stride = np.lib.stride_tricks.as_strided(x_padded, shape=shape, strides=strides)
     x_cols = np.ascontiguousarray(x_stride)
     x_cols.shape = (C * HH * WW, N * out_h * out_w)
 

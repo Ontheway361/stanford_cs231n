@@ -304,7 +304,7 @@ def conv(X, w, b, conv_param):
         for j in range(W_o):
             left_top_y, left_top_x = i * stride, j * stride
             conv_map = X[:, left_top_y:(left_top_y + HH), left_top_x:(left_top_x + HH)] * w
-            Y[i, j] = np.sum(conv_map) + b
+            Y[i, j]  = np.sum(conv_map) + b
 
     return Y
 
@@ -323,19 +323,19 @@ def conv_forward_naive(x, w, b, conv_param):
     - b: Biases, of shape (F,)
     - conv_param: A dictionary with the following keys:
       - 'stride': The number of pixels between adjacent receptive fields in the horizontal and vertical directions.
-      - 'pad': The number of pixels that will be used to zero-pad the input.
+      - 'pad'   : The number of pixels that will be used to zero-pad the input.
 
     Returns a tuple of:
     - out: Output data, of shape (N, F, H', W') where H' and W' are given by
-                 H' = 1 + (H + 2 * pad - HH) / stride
-                 W' = 1 + (W + 2 * pad - WW) / stride
+                 H' = 1 + (H + 2 * pad - HH) // stride
+                 W' = 1 + (W + 2 * pad - WW) // stride
     - cache: (x, w, b, conv_param)
     """
 
     out = None
 
     # get params
-    N, C, H, W = x.shape
+    N, C, H, W   = x.shape
     F, C, HH, WW = w.shape
 
     # conv for evry image
