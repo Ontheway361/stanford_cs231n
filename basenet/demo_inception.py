@@ -36,6 +36,6 @@ if __name__ == '__main__':
     # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # model = GoogLeNet(10).to(device)
     model = GoogLeNet(10)
-    model = torch.nn.DataParallel(model, device_ids=[0, 1,]).cuda()
+    model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
     net_trainer(model, train_loader, test_loader, 20, 128)
     # net_infer(model, test_loader)

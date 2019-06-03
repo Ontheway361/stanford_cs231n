@@ -154,14 +154,16 @@ def net_trainer(model, loader_train, test_loader, num_epochs = 10, batch_size = 
 def net_infer(model, loader_test):
     ''' test the net_classifier '''
 
+    t.set_grad_enabled(False)
+
     model = model.eval()
-    device = t.device("cuda:0" if t.cuda.is_available() else "cpu"
+
     eval_acc = 0.0; eval_loss = 0.0; num_test = 0
 
     for batch_x, batch_y in tqdm(loader_test):
 
-        batch_x = Variable(batch_x, requires_grad=False).to(device)
-        batch_y = Variable(batch_y).to(device)
+        batch_x = batch_x.cuda(async=True)
+        batch_y = batch_y
 
         score = model(batch_x)
         loss  = model.loss(score, batch_y)
