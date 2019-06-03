@@ -6,9 +6,9 @@ author: lujie
 """
 
 import torch as t
+import numpy as np
 from tqdm import tqdm
 from torch import  nn
-import numpy as np
 from IPython import embed
 from torch.autograd import Variable
 from torch.nn import functional as F
@@ -91,85 +91,5 @@ class ResNet(nn.Module):
         x = F.avg_pool2d(x, 1)  # 7
         x = x.view(x.size(0), -1)
         out = self.fc(x)
+        
         return out
-
-    def loss(self, score, label):
-        ''' loss function '''
-
-        loss_function = t.nn.CrossEntropyLoss()
-        loss_value = loss_function(score, label)
-
-        return loss_value
-
-
-def net_trainer(model, loader_train, test_loader, num_epochs = 10, batch_size = 128, save_freq = 10):
-    '''
-    Train the resnet34 as a classifier
-
-    step - 0. check the status of GPU
-    step - 1. set the optimizer and loss_func
-    step - 2. start the training process
-    step - 3. return the trained_net as a classifier
-    '''
-
-    # step - 0
-    device = t.device("cuda:0" if t.cuda.is_available() else "cpu")
-
-    # step - 1
-    optimizer = t.optim.Adam(model.parameters())
-
-    # step - 2
-    for epoch in range(num_epochs):
-
-        running_loss = 0; running_acc = 0.0; num_instance = 0
-
-        for batch_x, batch_y in tqdm(loader_train):
-
-            batch_x = Variable(batch_x, requires_grad=True).to(device)
-            batch_y = Variable(batch_y).to(device)
-
-            if len(batch_x) != batch_size:
-                continue
-
-            score = model(batch_x)
-            loss  = model.loss(score, batch_y)
-
-            num_instance += len(batch_x)
-            running_loss += loss.item()
-            pred_y = t.max(score, 1)[1]
-            logis = (pred_y == batch_y).sum()
-            running_acc += logis.item()
-
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-        print('epoch %2d; \ttrain Loss: %.10f;\ttrain acc : %5.4f' % \
-                   (epoch, running_loss/num_instance, running_acc/num_instance))
-
-        net_infer(model, test_loader)
-
-    return model
-
-
-def net_infer(model, loader_test):
-    ''' test the net_classifier '''
-
-    t.set_grad_enabled(False)
-
-    model = model.eval()
-
-    eval_acc = 0.0; eval_loss = 0.0; num_test = 0
-
-    for batch_x, batch_y in tqdm(loader_test):
-
-        batch_x = batch_x.cuda(async=True)
-        batch_y = batch_y
-
-        score = model(batch_x)
-        loss  = model.loss(score, batch_y)
-        eval_loss += loss.item()
-        pred = t.max(score, 1)[1]
-        num_correct = (pred == batch_y).sum()
-        eval_acc += num_correct.item()
-        num_test += len(batch_y)
-    print('test_loss : %.10f\ttest acc : %5.4f' % (eval_loss/num_test, eval_acc/num_test))
