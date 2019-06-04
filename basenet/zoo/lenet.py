@@ -5,34 +5,31 @@ date  : 2019/01/17
 author: lujie
 """
 
-import torch as t
-from tqdm import tqdm
-from torch.autograd import Variable
+import torch
 
-
-class LeNets(t.nn.Module):
+class LeNets(torch.nn.Module):
 
     def __init__(self, num_class = 10):
         super(LeNets, self).__init__()
-        self.conv1 = t.nn.Sequential(
-            t.nn.Conv2d(3, 64, 7),
-            t.nn.ReLU(),
-            t.nn.MaxPool2d(2)
+        self.conv1 = torch.nn.Sequential(
+            torch.nn.Conv2d(3, 64, 7),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2)
         )
-        self.conv2 = t.nn.Sequential(
-            t.nn.Conv2d(64, 128, 5),
-            t.nn.ReLU(),
-            t.nn.MaxPool2d(2)
+        self.conv2 = torch.nn.Sequential(
+            torch.nn.Conv2d(64, 128, 5),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2)
         )
-        self.conv3 = t.nn.Sequential(
-            t.nn.Conv2d(128, 256, 3),
-            t.nn.ReLU(),
-            t.nn.MaxPool2d(2)
+        self.conv3 = torch.nn.Sequential(
+            torch.nn.Conv2d(128, 256, 3),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2)
         )
-        self.dense = t.nn.Sequential(
-            t.nn.Linear(256, 128),
-            t.nn.ReLU(),
-            t.nn.Linear(128, num_class)
+        self.dense = torch.nn.Sequential(
+            torch.nn.Linear(256, 128),
+            torch.nn.ReLU(),
+            torch.nn.Linear(128, num_class)
         )
 
     def forward(self, x):

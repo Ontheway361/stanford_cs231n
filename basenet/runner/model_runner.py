@@ -12,16 +12,16 @@ import torchvision
 from tqdm import tqdm
 from config import config_setting
 from utils.dataset import ToyData
-from zoo import GoogLeNet, ResNet, LeNets
+from zoo import LeNets, AlexNet, VGG, GoogLeNet, ResNet, DenseNet, SqueezeNet
 
 from IPython import embed
+
 
 class DemoRunner(object):
 
     def __init__(self, args_dict = {}):
 
         self.args = config_setting()
-
         self._set_envs()
 
 
@@ -41,23 +41,38 @@ class DemoRunner(object):
     def _modelloader(self):
         ''' '''
 
-        if self.args.base_net == 'inception':
+        if self.args.base_net == 'lenet':
+            self.base_model = LeNets(self.args.num_class).to(self.device)
+
+        elif self.args.base_net == 'alexnet':
+            self.base_model = AlexNet(self.args.num_class).to(self.device)
+
+        elif self.args.base_net == 'vgg':
+            self.base_model = VGG(self.args.num_class, 'A').to(self.device)
+
+        elif self.args.base_net == 'inception':
             self.base_model = GoogLeNet(self.args.num_class).to(self.device)
+
         elif self.args.base_net == 'resnet':
             self.base_model = ResNet(self.args.num_class).to(self.device)
-        elif self.args.base_net == 'lenet':
-            self.base_model = LeNets(self.args.num_class).to(self.device)
+
+        elif self.args.base_net == 'densenet':
+            self.base_model = DenseNet(self.args.num_class, 'A').to(self.device)
+
+        elif self.args.base_net == 'squeezenet':
+            self.base_model = SqueezeNet(self.args.num_class, 'A').to(self.device)
+
         else:
             raise TypeError('Unknow base_net ...')
-
         print('=====> model %s loading finished =====>' % self.args.base_net)
 
 
     def _optimizer(self):
         ''' '''
 
-        # self.base_model = torch.nn.DataParallel(self.base_model, device_ids=[0, 1]).cuda()
-        # torch.backends.cudnn.benchmark = True
+        if self.args.platform == 'gpu':
+            self.base_model = torch.nn.DataParallel(self.base_model, device_ids=self.args.gpus).cuda()
+            torch.backends.cudnn.benchmark = True
 
         self.criterion = torch.nn.CrossEntropyLoss()
         if self.args.optim_md == 'sgd':
@@ -152,10 +167,9 @@ class DemoRunner(object):
 
             loss, acc = self._valid_engine()
 
-            if loss < bst_acc or acc > bst_acc:
-
+            print('Yahoo, a new SOTA has been found ...')
+            if self.args.save_flag and (loss < bst_acc or acc > bst_acc):
                 save_name = self.args.save_to + self.args.base_net + 'bst.pth.tar'
-                print('Yahoo, a new SOTA has been found ...')
                 torch.save({
                     'epoch'      : epoch+1,
                     'loss'       : bst_loss,
