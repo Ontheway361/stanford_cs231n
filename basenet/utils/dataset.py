@@ -8,7 +8,9 @@ author: lujie
 import torchvision as tv
 import torch.utils.data.dataloader as Data
 
-root_path = '/home/lujie/Documents/deep_learning/cs231n/cs231n_dataset/'
+#root_path = '/home/lujie/Documents/deep_learning/cs231n/cs231n_dataset/'
+root_path = '/home/gpu3/lujie/cs231n/cs231n_dataset/'
+
 
 class ToyData(object):
 

@@ -42,25 +42,25 @@ class DemoRunner(object):
         ''' '''
 
         if self.args.base_net == 'lenet':
-            self.base_model = LeNets(self.args.num_class).to(self.device)
+            self.base_model = LeNets(self.args.num_class)
 
         elif self.args.base_net == 'alexnet':
-            self.base_model = AlexNet(self.args.num_class).to(self.device)
+            self.base_model = AlexNet(self.args.num_class)
 
         elif self.args.base_net == 'vgg':
-            self.base_model = VGG(self.args.num_class, 'A').to(self.device)
+            self.base_model = VGG(self.args.num_class, self.args.mode)
 
         elif self.args.base_net == 'inception':
-            self.base_model = GoogLeNet(self.args.num_class).to(self.device)
+            self.base_model = GoogLeNet(self.args.num_class)
 
         elif self.args.base_net == 'resnet':
-            self.base_model = ResNet(self.args.num_class).to(self.device)
+            self.base_model = ResNet(self.args.num_class)
 
         elif self.args.base_net == 'densenet':
-            self.base_model = DenseNet(self.args.num_class, 'A').to(self.device)
+            self.base_model = DenseNet(self.args.num_class, self.args.mode)
 
         elif self.args.base_net == 'squeezenet':
-            self.base_model = SqueezeNet(self.args.num_class, 'A').to(self.device)
+            self.base_model = SqueezeNet(self.args.num_class, self.args.mode)
 
         else:
             raise TypeError('Unknow base_net ...')
@@ -73,6 +73,8 @@ class DemoRunner(object):
         if self.args.platform == 'gpu':
             self.base_model = torch.nn.DataParallel(self.base_model, device_ids=self.args.gpus).cuda()
             torch.backends.cudnn.benchmark = True
+        else:
+            self.base_mode.to(self.device)
 
         self.criterion = torch.nn.CrossEntropyLoss()
         if self.args.optim_md == 'sgd':
@@ -86,7 +88,21 @@ class DemoRunner(object):
         else:
             raise TypeError('Unknow optimizer, please check ...')
 
-        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[30, 45], gamma=0.5)
+        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[25, 40], gamma=self.args.gamma)
+
+    
+    def _adjust_lr(self, epoch, exp_num):
+        ''' Sets the learning rate to the initial LR decayed by 0.1 every 30 epochs '''
+
+        # decay = self.args.gamma ** (sum(epoch >= np.array(self.args.lr_steps)))
+        decay = self.args.gamma ** exp_num
+        lr    = self.args.lr * decay
+        decay = self.args.weight_decay
+
+        for param_group in self.optimizer.param_groups:
+
+            param_group['lr'] = lr * param_group['lr_mult']
+            param_group['weight_decay'] = decay * param_group['decay_mult']
 
 
     def _dataloader(self):
@@ -108,8 +124,8 @@ class DemoRunner(object):
         start_time, num_instance = time.time(), 0
         for input, target in tqdm(self.trainloader):
 
-            # target     = target.cuda(async=True)
-            # target_var = target
+            target     = target.cuda(async=True)
+            target_var = target
             num_instance += len(target)
             output = self.base_model(input)
             loss   = self.criterion(output, target)
@@ -137,8 +153,8 @@ class DemoRunner(object):
         running_loss, running_acc, num_instance = 0, 0.0, 0
         for input, target in tqdm(self.testloader):
 
-            # target     = target.cuda(async=True)
-            # target_var = target
+            target     = target.cuda(async=True)
+            target_var = target
             num_instance += len(target)
             output = self.base_model(input)
             loss   = self.criterion(output, target)
@@ -157,18 +173,36 @@ class DemoRunner(object):
     def _main_loop(self):
 
         print('=====> ready for training =====>')
+
         bst_loss, bst_acc = 1e3, -1
+        saturate_cnt, exp_num = 0, 0
 
         for epoch in range(0, self.args.num_epochs):
 
-            self.scheduler.step()
+            if saturate_cnt == self.args.num_saturate:
+                exp_num += 1
+                saturate_cnt = 0
+                print('Attention!!!, lr decreases by a factor of %6d' % (10 ** exp_num))
+            
+            if self.args.adlr_style == 'parts':
+                self._adjust_lr(epoch, exp_num)
+            else:
+                self.scheduler.step()
 
             self._train_engine(epoch)
 
             loss, acc = self._valid_engine()
+            
+            is_best = loss < bst_acc or acc > bst_acc
 
-            print('Yahoo, a new SOTA has been found ...')
-            if self.args.save_flag and (loss < bst_acc or acc > bst_acc):
+            if is_best:
+                saturate_cnt = 0
+                print('Yahoo, a new SOTA has been found ...')
+            else:
+                saturate_cnt += 1
+
+            if self.args.save_flag and is_best:
+
                 save_name = self.args.save_to + self.args.base_net + 'bst.pth.tar'
                 torch.save({
                     'epoch'      : epoch+1,
